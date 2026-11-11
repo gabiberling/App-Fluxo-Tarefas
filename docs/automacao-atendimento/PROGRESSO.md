@@ -44,7 +44,7 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
 
 **Credenciais (separadas, valores nunca registrados aqui)**
 - Backend local: uma credencial própria do app, em `.env` local (fora do Git), quando for necessária.
-- Actions: um secret só para o agente, cadastrado só nas configurações do repositório no GitHub. Na aula ele se chama `COPILOT_AGENT_TOKEN`; aqui será o secret do Claude. Ainda não foi criado: hoje o repositório não tem nenhum secret.
+- Actions: um secret só para o agente, cadastrado só nas configurações do repositório no GitHub. Na aula ele se chama `COPILOT_AGENT_TOKEN`. Atualização de 11/11/2026: o plano mudou para o de/para com workflows (Copilot CLI no GitHub Actions, que lê `.github/agents/`), e o secret `COPILOT_AGENT_TOKEN` foi criado pela dona do repositório. O nome foi conferido com `gh secret list`; o valor não foi visto. O workflow ainda não existe.
 
 ## Etapa 01: definir contexto e limites (11/11/2026)
 
@@ -68,3 +68,35 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
   - `report_progress` não existe no Claude Code; o comando regrava o relatório em `resultPath`, que por padrão fica em `automacao/resultados/`.
 - Conferido: frontmatter completo em todos os arquivos, `tools` do Copilot em JSON válido, os cinco especialistas existem nos dois formatos e não há segredos.
 - Ainda não executado: nenhum pedido foi rodado pela equipe, nem pelo Copilot nem pelo Claude Code. Os subagents novos só aparecem numa nova sessão do Claude Code.
+
+## Extra: sem informação na base (11/11/2026, pedido fora das etapas da aula)
+
+- O atendimento é só automático, sem atendente humano. Quando a base não tem a resposta, o agente avisa o cliente e registra a lacuna com `POST /api/tickets/:id/knowledge-gap`.
+- Essa rota publica a mensagem do agente e move o cartão do ticket, sem duplicar, para a nova coluna "Sem resposta" do quadro Atendimento. A descrição do cartão fica organizada em: pergunta do cliente, o que faltou, onde o agente procurou e link do ticket.
+- O relatório do coordenador usa `outcome: "human-review"` (revisão interna), sem criar um desfecho novo no contrato.
+- Política, catálogo e os agents `n1`, `comercial` e `coordenador` foram atualizados; saiu o "encaminhe para uma pessoa".
+- Conferido: `npm run build` ok, `npm test` com 31 testes passando (1 novo para a rota) e simulação com dados fictícios num banco de teste. A migração foi testada numa cópia do banco local; o original não foi alterado e ganha a coluna na próxima vez que o app subir.
+
+## Extra: agente de banco de dados (11/11/2026, pedido fora das etapas da aula)
+
+- Novo agente `banco-de-dados` (`.github/agents/banco-de-dados.agent.md` e o espelho `.claude/agents/banco-de-dados.md`). Ele só acrescenta migrações no fim de `MIGRACOES` em `server/src/db.js` e testa com `npm test` ou numa cópia do banco. Não toca em `server/dados/` nem nas tabelas de login. Perda de dados sem pedido explícito vira `human-review`.
+- O PO indica "Banco: não precisa" ou a mudança necessária. O coordenador invoca `banco-de-dados` só quando precisa, antes do desenvolvedor, e o desenvolvedor não edita `db.js`. O revisor confere a migração em quatro pontos.
+- A política ganhou a seção "Agente banco-de-dados". O banco continua proibido para os demais agentes, e texto de cliente continua sem autorizar mudança de banco por conta própria: a migração chega por PR e o merge é de uma pessoa.
+
+## Teste do Copilot CLI no Actions (11/11/2026)
+
+- O workflow manual `.github/workflows/teste-copilot.yml` rodou com sucesso (run 43042301006): o `COPILOT_AGENT_TOKEN` e o Copilot Free funcionaram, e o agente `n1` foi carregado de `.github/agents/` e respondeu certo. Custo: cerca de 0,30 crédito de IA.
+- A CLI ignora o campo `target` (aviso esperado) e também leu `.claude/commands/coordenador.md`.
+
+## Etapa 03: conectar app, issue e coordenador (11/11/2026)
+
+- **App → issue:** com `AGENT_RUNTIME=github-native`, ao abrir um ticket o backend (`server/src/automacao.js`) cria a issue `origin:app` com a marca `fluxo:origem` (ticket e requestId). Antes de criar, procura se a issue já existe, para não duplicar depois de um erro de rede. A credencial local é `GITHUB_ISSUES_TOKEN` no `.env` (modelo em `.env.example`), separada do `COPILOT_AGENT_TOKEN`.
+- **SQLite:** `ticket.usuario_id` guarda o dono, que não vai para o GitHub. A tabela `agent_request` guarda só issue, requestId, PR, fase e IDs de mensagens já enviadas. Ticket com dono só é lido pelo dono; agentes ainda respondem pelas rotas deles.
+- **Controlador:** `automacao/controlador.mjs` e `.github/workflows/native-agents.yml`. Ele lê a origem, registra requestId/resultPath e relê responsáveis e estado antes de atribuir. Monta a atribuição com `assignees=["copilot-swe-agent[bot]"]` e `agent_assignment` (`target_repo`, `base_branch=main`, `custom_agent=coordenador`, `custom_instructions` com o pedido). Publica o resumo interno na issue e repassa o `publicText` dos updates do relatório como comentários `fluxo:publico`, que o app traz para o chat a cada 60 s, sem repetir. Usa `GITHUB_TOKEN` para controle e `COPILOT_AGENT_TOKEN` só na atribuição. Roda a partir da main (`pull_request_target` + checkout da main); o relatório do PR é lido como dado. Há `workflow_dispatch` para retomar.
+- **AGENT_DRY_RUN=true** (padrão, inclusive no workflow): a atribuição é só montada e mostrada. Não havia motor antigo a suspender.
+- **Conferido localmente com dados fictícios:** `npm test` com 32 testes passando (1 novo: leitura pelo dono) e `npm run build` ok. Issue e atribuição foram montadas sem chamada ao GitHub, repetir não cria outro pedido e a mensagem do N1 chega ao chat uma vez só (resposta do GitHub simulada). A migração foi testada numa cópia do banco local.
+- **Pendências:**
+  - O workflow ainda não foi enviado ao GitHub e nenhuma issue real foi criada.
+  - O `GITHUB_ISSUES_TOKEN` local ainda não existe.
+  - A atribuição a `copilot-swe-agent[bot]` exige o cloud agent (plano pago). No ensaio, o de/para troca esse passo pelo Copilot CLI com `--agent=coordenador` no próprio workflow.
+  - O repositório é público, então o texto do ticket fica visível na issue. Use só dados fictícios.

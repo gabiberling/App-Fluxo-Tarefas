@@ -10,7 +10,9 @@ Fluxo é um quadro de tarefas no estilo Kanban com uma área de atendimento. Ele
 ## Atendimento (`/atendimento`)
 - **Novo ticket** abre uma janela com **Título** e **Descrição**. O ticket vira uma conversa e também um cartão na coluna "Novos" do quadro **Atendimento**.
 - Na conversa, a pessoa responde pela caixa de mensagem: Enter envia, Shift+Enter quebra a linha. Há **Marcar como resolvido** ou **Reabrir**, **Ver no quadro** e, no menu **⋮**, **Renomear** e **Excluir**.
-- Respostas do suporte entram pela API (`POST /api/tickets/:id/messages` com `role: "agent"`). A tela confere respostas novas a cada 5 segundos.
+- O atendimento é automático: agentes respondem pela API (`POST /api/tickets/:id/messages` com `role: "agent"`). A tela confere respostas novas a cada 5 segundos.
+- Quando a base não tem a resposta, o agente avisa o cliente e o cartão do ticket vai para a coluna "Sem resposta" do quadro Atendimento, com a pergunta, o que faltou e onde o agente procurou.
+- Colunas do quadro Atendimento: Novos, Em atendimento, Sem resposta e Resolvidos.
 
 ## O que o app não tem hoje
 - Login na interface: as rotas de login existem na API, mas as telas não pedem login.

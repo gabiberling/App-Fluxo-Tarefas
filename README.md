@@ -68,7 +68,7 @@ JSON puro, sem login obrigatório. A interface fala com a API pelo proxy
 ### Atendimento (tickets)
 
 A tela fica em `/atendimento`. Cada ticket é uma conversa; `role` é `user`
-(quem abriu) ou `agent` (suporte humano ou agente autônomo).
+(quem abriu) ou `agent` (agente automático; não há atendimento humano).
 
 | Método | Rota | Resposta |
 |---|---|---|
@@ -78,13 +78,14 @@ A tela fica em `/atendimento`. Cada ticket é uma conversa; `role` é `user`
 | PATCH | `/api/tickets/:id` `{title?, status?}` | `{ticket}` (`status`: `open` ou `resolved`) |
 | DELETE | `/api/tickets/:id` | `{ok:true}` |
 | POST | `/api/tickets/:id/messages` `{content, role?}` | `{message, ticket}` |
+| POST | `/api/tickets/:id/knowledge-gap` `{content, question, missing, searched}` | `{message, ticket}`: resposta do agente e cartão movido para "Sem resposta" |
 
 Para um agente responder: `POST /api/tickets/:id/messages` com
 `{"role":"agent","content":"..."}`. A tela busca novidades a cada 5 segundos.
 Mensagem do usuário num ticket resolvido reabre o ticket.
 
 Todo ticket aberto vira também um cartão no fim da primeira coluna ("Novos")
-do quadro **Atendimento** (`board-atendimento`). Se esse quadro for apagado,
+do quadro **Atendimento** (`board-atendimento`, colunas Novos, Em atendimento, Sem resposta e Resolvidos). Se esse quadro for apagado,
 o próximo ticket o recria. Excluir o ticket tira o cartão do Kanban; excluir só
 o cartão mantém a conversa (`cardId` fica `null`).
 

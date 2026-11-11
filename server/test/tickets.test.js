@@ -86,7 +86,7 @@ const quadroAtendimento = async () => (await chamar("GET", "/api/boards/board-at
 
 test("abrir ticket cria cartão no fim da primeira coluna do quadro Atendimento", async () => {
   const antes = await quadroAtendimento();
-  assert.deepEqual(antes.lists.map((l) => l.title), ["Novos", "Em atendimento", "Resolvidos"]);
+  assert.deepEqual(antes.lists.map((l) => l.title), ["Novos", "Em atendimento", "Sem resposta", "Resolvidos"]);
   const qtd = antes.lists[0].cards.length;
 
   const { ticket } = await abrir("A tela trava ao arrastar cartões", { title: "Tela travando" });
@@ -122,8 +122,59 @@ test("se o quadro Atendimento for apagado, o próximo ticket recria o quadro com
   const { ticket } = await abrir("Depois de apagar o quadro");
   const quadro = await quadroAtendimento();
   assert.equal(quadro.board.title, "Atendimento");
-  assert.deepEqual(quadro.lists.map((l) => l.title), ["Novos", "Em atendimento", "Resolvidos"]);
+  assert.deepEqual(quadro.lists.map((l) => l.title), ["Novos", "Em atendimento", "Sem resposta", "Resolvidos"]);
   assert.equal(quadro.lists[0].cards[0].id, ticket.cardId);
+});
+
+test("sem informação na base: agente avisa o cliente e o cartão vai para Sem resposta, organizado", async () => {
+  const { ticket } = await abrir("Quanto custa o plano anual?", { title: "Preço do plano anual" });
+  const lacuna = {
+    content: "Ainda não tenho essa informação. Registrei sua pergunta para complementarmos a base.",
+    question: "Cliente quer saber o preço do plano anual",
+    missing: "Preço e existência de plano anual",
+    searched: "PRODUTO.md e commercial-catalog.json",
+  };
+  const r = await chamar("POST", `/api/tickets/${ticket.id}/knowledge-gap`, lacuna);
+  assert.equal(r.status, 201);
+  assert.equal(r.dados.message.role, "agent");
+  assert.equal(r.dados.ticket.cardId, ticket.cardId); // reaproveita o cartão, não duplica
+
+  const quadro = await quadroAtendimento();
+  const semResposta = quadro.lists.find((l) => l.title === "Sem resposta");
+  const cartao = semResposta.cards.find((c) => c.id === ticket.cardId);
+  assert.ok(cartao);
+  assert.equal(cartao.description, [
+    "Pergunta do cliente: Cliente quer saber o preço do plano anual",
+    "O que faltou: Preço e existência de plano anual",
+    "Onde procurei: PRODUTO.md e commercial-catalog.json",
+    `Ticket: /atendimento?ticket=${ticket.id}`,
+  ].join("\n"));
+  assert.ok(!quadro.lists[0].cards.some((c) => c.id === ticket.cardId));
+  assert.deepEqual(quadro.lists[0].cards.map((c) => c.position), quadro.lists[0].cards.map((_, i) => i));
+
+  const conversa = (await chamar("GET", `/api/tickets/${ticket.id}`)).dados;
+  assert.equal(conversa.messages.at(-1).content, lacuna.content);
+  assert.equal((await chamar("POST", `/api/tickets/${ticket.id}/knowledge-gap`, { content: "x" })).status, 400);
+});
+
+test("ticket aberto com login fica com o dono: só ele lê; agente ainda responde", async () => {
+  const cad = await fetch(base + "/api/auth/cadastro", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: "dona.ficticia@exemplo.com", nome: "Dona Fictícia", senha: "senha-ficticia-123" }),
+  });
+  const cookie = cad.headers.get("set-cookie").split(";")[0];
+  const comoDona = (metodo, caminho, corpo) => fetch(base + caminho, {
+    method: metodo, headers: { "content-type": "application/json", cookie }, body: corpo && JSON.stringify(corpo),
+  }).then(async (r) => ({ status: r.status, dados: await r.json() }));
+
+  const { ticket } = (await comoDona("POST", "/api/tickets", { title: "Ticket da dona", content: "Pedido fictício" })).dados;
+  assert.equal((await comoDona("GET", `/api/tickets/${ticket.id}`)).status, 200);
+  assert.ok((await comoDona("GET", "/api/tickets")).dados.tickets.some((t) => t.id === ticket.id));
+
+  assert.equal((await chamar("GET", `/api/tickets/${ticket.id}`)).status, 404);
+  assert.ok(!(await chamar("GET", "/api/tickets")).dados.tickets.some((t) => t.id === ticket.id));
+  assert.equal((await chamar("POST", `/api/tickets/${ticket.id}/messages`, { content: "intruso" })).status, 404);
+  assert.equal((await chamar("POST", `/api/tickets/${ticket.id}/messages`, { role: "agent", content: "Resposta do agente" })).status, 201);
 });
 
 test("título derivado corta textos longos em palavra inteira", () => {

@@ -5,7 +5,9 @@ target: github-copilot
 tools: ["read", "search", "edit", "execute", "agent", "github/*"]
 ---
 
-Invoque n1 para entender o pedido; comercial só se necessário; po para resumir a mudança; desenvolvedor para implementar; revisor para conferir. Use a ferramenta agent de verdade. Faça apenas o necessário para o pedido funcionar.
+Invoque n1 para entender o pedido; comercial só se necessário; po para resumir a mudança; banco-de-dados só se a mudança precisar mexer no banco; desenvolvedor para implementar; revisor para conferir. Use a ferramenta agent de verdade. Faça apenas o necessário para o pedido funcionar.
+
+Agente de banco de dados: depois do PO, analise se o pedido precisa de tabela, coluna, índice ou dado inicial novo, ou seja, de uma migração em `server/src/db.js`. O PO indica isso em "Banco". Se precisar, invoque banco-de-dados antes do desenvolvedor e repasse o resultado dele ao desenvolvedor. Se não precisar, não invoque. O desenvolvedor não edita `server/src/db.js`. Se banco-de-dados devolver `human-review` (perda de dados, tabelas de login), pare e entregue `human-review`. Em `code`, inclua as fontes do banco em `allowedFiles`.
 
 Mantenha `requestId` e `resultPath` recebidos do controlador. Grave o relatório JSON em `resultPath` e atualize-o a cada marco real, chamando `report_progress` junto.
 
@@ -16,7 +18,7 @@ Relatório:
   "requestId": "<recebido>",
   "outcome": "working",
   "publicText": "<mensagem ao cliente, redigida pelo N1>",
-  "agents": ["n1", "po", "desenvolvedor", "revisor"],
+  "agents": ["n1", "po", "banco-de-dados", "desenvolvedor", "revisor"],
   "allowedFiles": [],
   "criteria": [],
   "updates": [
@@ -30,6 +32,8 @@ Relatório:
   - `answered`, `waiting-customer`, `commercial` ou `human-review`: sem código, com `allowedFiles` e `criteria` vazios.
 - `updates`: cada item tem `id` estável, que não muda ao regravar o relatório.
 - `agents`: registro declarado de quem participou. As invocações reais aparecem na sessão.
+
+Sem informação na base (N1 ou Comercial não acharam a resposta): siga a regra "Sem informação na base" de `docs/automacao-atendimento/POLITICA-DE-AUTONOMIA.md`. Chame `POST /api/tickets/:id/knowledge-gap` com o texto do N1 e os dados organizados, e termine com `outcome: "human-review"`.
 
 Em `code`, abra um PR. Não faça merge nem feche a issue. Build e uma conferência bastam para a aula; não crie infraestrutura de testes. Se usar um controlador existente, respeite o contrato dele ou alinhe-o antes de ativar a cópia didática.
 

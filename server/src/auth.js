@@ -31,6 +31,12 @@ function usuarioDaSessao(db, req) {
   return l ?? null;
 }
 
+/** Usuário logado, se houver; não barra quem não está logado. */
+export const usuarioOpcional = (db, req) => {
+  const u = usuarioDaSessao(db, req);
+  return u ? publico(u) : null;
+};
+
 /** Tratador que barra quem não está logado e deixa o usuário em `ctx.estado.usuario`. */
 export const exigirSessao = (db) => (ctx) => {
   const u = usuarioDaSessao(db, ctx.req);

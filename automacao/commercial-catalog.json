@@ -20,5 +20,5 @@
   "preco": null,
   "planos": null,
   "prazos": null,
-  "sem_informacao": "Preço, planos e prazos não estão definidos. Não informe valores: diga que essa informação não está disponível e encaminhe para uma pessoa."
+  "sem_informacao": "Preço, planos e prazos não estão definidos. Não informe valores: diga que essa informação ainda não está disponível e registre a lacuna (regra 'Sem informação na base' da política)."
 }

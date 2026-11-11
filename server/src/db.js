@@ -89,6 +89,22 @@ const MIGRACOES = [
    INSERT INTO card (id, list_id, title, description, position) VALUES
      ('card-ticket-boas-vindas', 'list-atend-andamento', 'Como convido alguém para o meu quadro?', 'Oi! Como convido alguém para o meu quadro?', 0);
    UPDATE ticket SET card_id = 'card-ticket-boas-vindas' WHERE id = 'ticket-boas-vindas';`,
+  // Coluna para perguntas que o agente não soube responder (falta informação na base).
+  `UPDATE list SET position = position + 1 WHERE board_id = 'board-atendimento' AND position >= 2;
+   INSERT INTO list (id, board_id, title, position)
+     SELECT 'list-atend-sem-resposta', 'board-atendimento', 'Sem resposta', 2
+     WHERE EXISTS (SELECT 1 FROM board WHERE id = 'board-atendimento');`,
+  // Etapa 03: dono do ticket (quem estava logado ao abrir) e estado mínimo da automação no GitHub.
+  `ALTER TABLE ticket ADD COLUMN usuario_id TEXT REFERENCES usuario(id) ON DELETE SET NULL;
+   CREATE TABLE agent_request (
+     ticket_id TEXT PRIMARY KEY REFERENCES ticket(id) ON DELETE CASCADE,
+     request_id TEXT NOT NULL UNIQUE,
+     issue_number INTEGER,
+     pr_number INTEGER,
+     fase TEXT NOT NULL,
+     mensagens_enviadas TEXT NOT NULL DEFAULT '[]',
+     atualizado_em TEXT NOT NULL
+   )`,
 ];
 
 /** `caminho` = arquivo do banco; `:memory:` nos testes. */

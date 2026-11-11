@@ -190,7 +190,7 @@ svg { flex: none; }
 }
 .cartao-titulo:hover { color: var(--oceano); }
 .cartao-descricao {
-  font-size: var(--meta); color: var(--secundario); text-wrap: pretty;
+  font-size: var(--meta); color: var(--secundario); text-wrap: pretty; white-space: pre-line;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .cartao-rodape { display: flex; align-items: center; gap: var(--e2); color: var(--secundario); font-size: var(--meta); }
