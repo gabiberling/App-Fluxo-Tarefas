@@ -34,7 +34,7 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 - [ ] (Opcional) Variáveis do repositório `AGENT_RUNTIME` e `AGENT_DRY_RUN` em *Settings → Secrets and variables → Actions → Variables*. Sem elas, o workflow usa `github-native` e `true`.
 - [x] **Troca para o Copilot CLI:** `native-agents.yml` roda `copilot --agent=coordenador` (`AGENT_EXECUTOR=copilot-cli`, padrão); a atribuição paga continua disponível com `AGENT_EXECUTOR=cloud-agent`.
 - [x] **Actions pode abrir PR:** *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* ligado.
-- [ ] **Desligar o dry-run:** variável do repositório `AGENT_DRY_RUN=false` (`gh variable set AGENT_DRY_RUN --body false`). Só com o ok da dona do repositório; para voltar, apague a variável ou use `true`.
+- [x] **Dry-run desligado** em 11/11, com o ok da dona do repositório: variável `AGENT_DRY_RUN=false`. Cada ticket novo aciona o agente (cerca de 2,7 créditos de IA no ensaio). Para pausar: `gh variable set AGENT_DRY_RUN --body true`.
 - [ ] **Validade dos tokens:** renovar o `COPILOT_AGENT_TOKEN` e o `GITHUB_ISSUES_TOKEN` antes de vencerem.
 
 ## Decisões em aberto

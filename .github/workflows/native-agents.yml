@@ -4,8 +4,8 @@
 # Segurança:
 # - Roda sempre a definição e o código da main (pull_request_target + checkout da main).
 # - O controlador é copiado para fora do repositório ANTES do agente; é essa cópia que executa.
-# - O passo do agente só recebe o token do Copilot: não faz push, não acessa a internet (URLs negadas)
-#   e só pode editar arquivos; .github, .claude, automacao, .env, server/dados e configs ficam bloqueados.
+# - O passo do agente só recebe o token do Copilot: não faz push, não acessa a internet (URLs negadas),
+#   não roda build/testes e só pode editar arquivos; .github, .claude, automacao, .env, server/dados e configs ficam bloqueados.
 # - Os testes rodam num passo sem nenhum token.
 # - Commit/push/PR são feitos pelo controlador, só se os arquivos mudados estiverem na política.
 #
@@ -70,7 +70,9 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm install -g @github/copilot
-          # A CLI também leria .claude/ (espelho do Claude Code); fora do caminho durante o agente.
+          # A CLI também leria .claude/ (espelho do Claude Code): fora do caminho durante o agente,
+          # escondido do git status para os agentes não o verem como "apagado".
+          git ls-files -z .claude | xargs -0 git update-index --skip-worktree
           mv .claude "$RUNNER_TEMP/.claude-espelho"
 
       - name: Coordenador (Copilot CLI)
@@ -80,7 +82,7 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
         run: |
           copilot --agent=coordenador --no-ask-user \
-            --allow-tool='write' --allow-tool='shell(npm run build)' \
+            --allow-tool='write' \
             --allow-tool='shell(git status)' --allow-tool='shell(git diff:*)' --allow-tool='shell(mkdir:*)' \
             --deny-tool='write(.github/**)' --deny-tool='write(automacao/controlador.mjs)' --deny-tool='write(.env*)' \
             --deny-tool='write(server/dados/**)' --deny-tool='write(package*.json)' --deny-tool='write(vite.config.js)' \
@@ -93,6 +95,7 @@ jobs:
         continue-on-error: true
         run: |
           mv "$RUNNER_TEMP/.claude-espelho" .claude
+          git ls-files -z .claude | xargs -0 git update-index --no-skip-worktree
           npm run build && npm test
 
       - name: Finalizar (PR e mensagens)

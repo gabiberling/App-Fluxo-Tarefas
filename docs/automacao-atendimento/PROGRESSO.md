@@ -120,3 +120,15 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
 - Sem informação na base pelo GitHub: o relatório traz `knowledgeGap`, o controlador o coloca no estado da issue e o app move o cartão para "Sem resposta" na sincronização.
 - Configuração do repositório: ligado "Allow GitHub Actions to create and approve pull requests" (`can_approve_pull_request_reviews=true`), necessário para o workflow abrir PR. O padrão de permissões continua leitura.
 - Conferido localmente: pedido do CLI montado, filtro da política (produto permitido; workflow, login, atendimento, package.json e controlador bloqueados), `npm test` com 32 testes passando e `npm run build` ok.
+
+## Ensaio real com AGENT_DRY_RUN=false (11/11/2026)
+
+- Com o ok da dona do repositório, foi criada a variável `AGENT_DRY_RUN=false` e o workflow rodou na issue #1 (run 43051505901, 4m34s, todos os passos com sucesso).
+- O coordenador invocou de verdade os subagentes Suporte N1, Product Owner, Desenvolvedor e Revisor. Como o ticket é fictício e o código não tem esse defeito, os agentes não inventaram mudança e encerraram em `human-review`, sem PR. O relatório foi gravado em resultPath; o resumo interno e a mensagem do N1 foram publicados na issue.
+- Custo: 2,72 créditos de IA (cerca de 4 minutos de agente). Acompanhe o saldo em https://github.com/settings/copilot.
+- Ajustes depois do ensaio:
+  1. O agente não roda mais build nem testes. A regra `shell(npm run build)` não casava e foi retirada, porque o workflow já roda build e testes num passo sem token.
+  2. `.claude/` fica escondido do `git status` enquanto está fora do caminho, porque o Revisor o via como "apagado".
+  3. Texto repetido (o mesmo publicText como andamento e como final) é publicado uma vez só.
+  4. O pedido diferencia "faltou detalhe do cliente" (`waiting-customer`, com uma pergunta) de "a base não tem a resposta" (`human-review` + `knowledgeGap`).
+- Atenção: com `AGENT_DRY_RUN=false`, todo ticket novo aberto no app aciona o agente e gasta créditos. Para pausar: `gh variable set AGENT_DRY_RUN --body true`.
