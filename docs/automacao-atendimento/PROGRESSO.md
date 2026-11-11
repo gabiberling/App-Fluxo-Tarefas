@@ -171,3 +171,4 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
   4. Campo `verification` no relatório, com a frase de conferência do Desenvolvedor (no Actions, sem navegador, ele diz que falta a conferência visual), mostrado no PR. O Revisor continua com a frase em `review.notes`.
 - **Proteção da main:** nenhuma (sem branch protection nem rulesets), sem exigências antigas a ajustar.
 - **Conferido:** regra de origem (PR do agente aceito; outra branch e fork recusados), `npm test` com 32 testes passando e `npm run build` ok. O resultado da primeira execução do CI na main está registrado logo abaixo.
+- **Build registrado:** a primeira execução do CI na main (commit 8e3e0fc, run 43054017197) passou: `npm ci`, `npm run build` e `npm test` verdes.
