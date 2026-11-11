@@ -1,0 +1,24 @@
+{
+  "produto": "Fluxo",
+  "descricao": "Quadro de tarefas no estilo Kanban (quadros, listas e cartões) com área de atendimento por tickets em formato de conversa.",
+  "fonte": "App atual e docs/automacao-atendimento/PRODUTO.md",
+  "recursos_disponiveis": [
+    "Criar, renomear e excluir quadros",
+    "Criar, renomear e excluir listas",
+    "Criar, editar, mover (menu ou arrastar) e excluir cartões com título e descrição",
+    "Abrir tickets de atendimento com título e descrição, conversar com o suporte e marcar como resolvido",
+    "Cada ticket gera um cartão na coluna Novos do quadro Atendimento"
+  ],
+  "recursos_indisponiveis": [
+    "Login na interface",
+    "Compartilhamento de quadros entre pessoas",
+    "Exportação",
+    "Anexos",
+    "Etiquetas",
+    "Datas de entrega"
+  ],
+  "preco": null,
+  "planos": null,
+  "prazos": null,
+  "sem_informacao": "Preço, planos e prazos não estão definidos. Não informe valores: diga que essa informação não está disponível e encaminhe para uma pessoa."
+}
