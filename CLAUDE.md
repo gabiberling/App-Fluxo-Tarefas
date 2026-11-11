@@ -25,6 +25,7 @@ Decisões, configurações e pendências: `docs/automacao-atendimento/DECISOES-E
 - `AGENT_DRY_RUN` (variável do repositório; padrão `true`): só a dona do repositório decide. Hoje está **desligado** (`false`): cada ticket gasta créditos do Copilot. Como ligar/desligar e o custo: seção "Dry-run" em `DECISOES-E-CONFIGURACOES.md`.
 - O PR do agente só abre se os arquivos estiverem em `PERMITIDOS` (controlador), o espelho da política: ao mudar um, mude o outro.
 - Entrega (etapa 05): PR com `Refs #issue`; `AUTO_MERGE` (variável do repositório, padrão `false`); depois do merge, a resposta `entrega-merge` e o fechamento da issue ficam com o controlador; no máximo uma rodada de correção (modo `avaliar`). Retomada: workflow_dispatch com o número da issue (ver PROGRESSO, etapa 05).
+- Verificação (etapa 04): `.github/workflows/ci.yml` (`npm ci` + build + testes) em push e PRs; nos PRs do agente, status do commit `fluxo/build-e-testes`. O controlador só aceita o PR da branch `agente/<requestId>` do próprio repositório.
 - Workflow de diagnóstico: `.github/workflows/teste-copilot.yml` (manual).
 
 ## Segurança (regras fixas)

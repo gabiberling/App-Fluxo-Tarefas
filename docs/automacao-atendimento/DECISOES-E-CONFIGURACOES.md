@@ -19,6 +19,7 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 | 11/11 | No ensaio, o agente roda no Actions só com o token do Copilot, sem push e sem internet; commit, push e PR ficam com o controlador da main, depois de conferir a política e os testes | Um ticket mal-intencionado não consegue fazer o agente mexer em workflow, banco ou credenciais |
 | 11/11 | Entrega (etapa 05): PR com `Refs` (não `Fixes`); depois do merge, resposta do N1 com ID estável `entrega-merge` e issue fechada pelo controlador; no máximo uma rodada automática de correção, e depois decide o instrutor | Pedido da aula; retomadas sem duplicar |
 | 11/11 | `AUTO_MERGE=false` (padrão): o PR fica aberto para a demonstração e o merge é da dona do repositório | Ainda não houve autorização para merge automático |
+| 11/11 | Verificação mínima (etapa 04): CI `ci.yml` (`npm ci` + build + testes) em push e PRs de pessoas; nos PRs do agente, a mesma verificação roda sem token no `native-agents` e vira o status `fluxo/build-e-testes` do commit. Para aceitar código: origem do PR (branch `agente/<requestId>` do próprio repositório), requestId, caminhos permitidos e build do commit atual | PR aberto pelo token do Actions não dispara outros workflows; um PR qualquer que cite a issue não pode entregar nem fechar |
 | 11/11 | Ticket aberto com login fica com **dono** (`ticket.usuario_id`); só o dono lê. Sem login, segue aberto (a interface ainda não tem login) | Etapa 03 |
 
 ## Configurações
@@ -32,6 +33,7 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 - [x] **Label `origin:app`** criado no repositório.
 - [x] **Apelidos dos tokens** em *Developer settings → Fine-grained tokens* (só nomes): `App-Fluxo-Tarefas` = token do secret `COPILOT_AGENT_TOKEN` (Copilot Requests); `App-Fluxo-Tarefas-Git` = token do `.env` `GITHUB_ISSUES_TOKEN` (Issues). Os dois vencem em 09/02/2027. Não apagar: os dois estão em uso.
 - [x] **Troca para o Copilot CLI:** `native-agents.yml` roda `copilot --agent=coordenador` (`AGENT_EXECUTOR=copilot-cli`, padrão); a atribuição paga continua disponível com `AGENT_EXECUTOR=cloud-agent`.
+- [x] **Proteção da `main`:** nenhuma (sem branch protection e sem rulesets), então não há exigência antiga a ajustar. O CI não é check obrigatório.
 - [x] **Actions pode abrir PR:** *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* ligado.
 - [x] **Variável do repositório `AGENT_DRY_RUN=false`** (11/11, com o ok da dona do repositório). Veja "Dry-run" abaixo.
 

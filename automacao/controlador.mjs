@@ -73,6 +73,7 @@ export function montarPedidoCli({ issue, requestId, resultPath, pedido }) {
     "- Invoque os especialistas (n1, comercial, po, banco-de-dados, desenvolvedor, revisor) como subagentes, conforme o seu arquivo de agent.",
     "- Não faça commit, push nem PR, e não chame a API do app: o workflow abre o PR em seu nome a partir do relatório.",
     "- Grave o relatório JSON em resultPath (crie a pasta se preciso) e regrave a cada marco; report_progress não existe aqui.",
+    "- Em outcome \"code\", inclua \"verification\": uma frase do Desenvolvedor sobre o que ele conferiu do comportamento pedido e o que ficou sem conferência (aqui não há navegador: mudança visual fica \"falta conferência visual no app\"; nunca invente screenshot).",
     "- Em outcome \"code\", inclua no relatório: \"review\": { \"ok\": true|false, \"notes\": \"parecer curto do Revisor sobre o diff\" } e \"deliveryText\": mensagem curta do N1 para depois que o código for integrado (diga que foi integrado e que o app local precisa ser atualizado; nunca diga que a máquina do cliente já está atualizada).",
     "- Dúvida de uso respondida sem código: outcome \"answered\" (o caso é encerrado).",
     "- Faltou detalhe do cliente (ex.: para reproduzir um erro): outcome \"waiting-customer\", com uma pergunta curta do N1 em publicText (o caso fica aberto).",
@@ -127,6 +128,10 @@ export const foraDaPolitica = (arquivos, resultPath) =>
 /** Resposta curta do N1 após o merge: a do relatório ou uma padrão (sem dizer que a máquina já mudou). */
 export const textoEntrega = (relatorio) => relatorio?.deliveryText?.trim()
   || "Pronto! A mudança que você pediu foi integrada ao código do Fluxo. Ela aparece no seu app depois que a instalação local for atualizada.";
+
+/** O PR é o do agente para este pedido? (mesmo repositório e branch agente/<requestId>). */
+export const prDoAgente = (pr, repo, requestId) =>
+  pr?.head?.ref === `agente/${requestId}` && (pr.head.repo?.full_name ?? repo) === repo;
 
 /** O build ou a revisão pedem correção? (só para outcome "code"). */
 export const motivoDeCorrecao = (relatorio, testesOk) =>
@@ -327,6 +332,14 @@ async function finalizar() {
       git("commit", "-m", `Agente: ${issue.title}\n\nrequestId: ${estado.requestId}\nRefs #${numero}`);
       estado.sha = git("rev-parse", "HEAD");
       git("push", `https://x-access-token:${env.GITHUB_TOKEN}@github.com/${c.repo}.git`, `HEAD:refs/heads/${ramo}`);
+      // Build e testes deste commit (rodados sem token) ficam visíveis no PR como status do commit.
+      const verde = env.TESTES_OK === "true";
+      await c.gh("POST", `/repos/${c.repo}/statuses/${estado.sha}`, {
+        state: verde ? "success" : "failure",
+        context: "fluxo/build-e-testes",
+        description: verde ? "npm ci + build + testes verdes (sem token)" : "build ou testes falharam",
+        ...(env.GITHUB_RUN_ID ? { target_url: `https://github.com/${c.repo}/actions/runs/${env.GITHUB_RUN_ID}` } : {}),
+      });
       const criterios = (relatorio.criteria ?? []).map((k) => `- [ ] **${k.id}**: ${k.description}`).join("\n") || "- (sem critério informado)";
       // "Refs" (e não "Fixes"): o merge NÃO fecha a issue sozinho; o controlador entrega a resposta e fecha.
       const pr = await c.gh("POST", `/repos/${c.repo}/pulls`, {
@@ -339,6 +352,7 @@ async function finalizar() {
           "",
           `**Arquivos:** ${codigo.map((f) => `\`${f}\``).join(", ")}`,
           `**Commit conferido:** \`${estado.sha.slice(0, 7)}\` (build e testes: ${env.TESTES_OK === "true" ? "verdes" : "**falharam**"})`,
+          `**Conferência do Desenvolvedor:** ${relatorio.verification ?? "(não registrada; falta a conferência do comportamento)"}`,
           `**Revisor:** ${relatorio.review ? `${relatorio.review.ok ? "aprovado" : "**reprovado**"}: ${relatorio.review.notes ?? ""}` : "(sem parecer no relatório)"}`,
           ...(estado.correcao ? ["**Rodada automática de correção:** feita (máximo 1)."] : []),
           ...(pendencia ? ["", `> ⚠️ **Pendência para o instrutor decidir:** ${pendencia}. Nenhuma nova rodada automática será feita.`] : []),
@@ -387,6 +401,10 @@ async function acompanhar(c, pr, dados = null) {
   dados ??= numero ? await c.carregar(numero) : null;
   if (!dados) return c.resumo("PR sem issue origin:app associada; ignorado.");
   const { issue, salvo, estado } = dados;
+  // Origem do PR: só o PR do agente (branch agente/<requestId> deste mesmo repositório) entrega ou fecha.
+  if (!prDoAgente(pr, c.repo, estado.requestId)) {
+    return c.resumo(`PR #${pr.number} não é o PR do agente para ${estado.requestId}; ignorado.`);
+  }
   estado.pr = pr.number;
   // Relatório como dado: depois do merge ele está na main; antes, na branch do PR.
   let relatorio = null;

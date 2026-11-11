@@ -159,3 +159,15 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
 - se o trabalho parou no meio (`executando`) ou o relatório falhou (`erro-execucao`), executa de novo o mesmo requestId.
 
 No app, a sincronização usa os mesmos IDs e não duplica mensagens.
+
+## Etapa 04: validar código e regressão (11/11/2026, feita depois da 05)
+
+O professor não usou esta etapa em aula, mas ela foi conferida e completada.
+- **Já atendido:** o `native-agents` instala pelo lockfile (`npm ci`) e roda `npm run build` + `npm test` num passo sem token. Os testes existentes são mantidos e nenhum teste novo é obrigatório. O critério é simples (`{id, description}`), sem exigir caminho de teste. O código candidato nunca roda com tokens de controle. Uma falha concreta volta ao desenvolvedor (rodada única da etapa 05).
+- **Acrescentado:**
+  1. `.github/workflows/ci.yml`: verificação mínima (`npm ci`, build e testes) em push na main e em PRs de pessoas.
+  2. Status do commit `fluxo/build-e-testes` publicado pelo controlador no SHA do PR do agente, porque PR aberto pelo token do Actions não dispara o CI.
+  3. Origem do PR conferida antes de entregar ou fechar: só a branch `agente/<requestId>` do próprio repositório.
+  4. Campo `verification` no relatório, com a frase de conferência do Desenvolvedor (no Actions, sem navegador, ele diz que falta a conferência visual), mostrado no PR. O Revisor continua com a frase em `review.notes`.
+- **Proteção da main:** nenhuma (sem branch protection nem rulesets), sem exigências antigas a ajustar.
+- **Conferido:** regra de origem (PR do agente aceito; outra branch e fork recusados), `npm test` com 32 testes passando e `npm run build` ok. O resultado da primeira execução do CI na main está registrado logo abaixo.
