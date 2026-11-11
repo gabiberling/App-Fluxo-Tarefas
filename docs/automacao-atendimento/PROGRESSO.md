@@ -172,3 +172,14 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
 - **Proteção da main:** nenhuma (sem branch protection nem rulesets), sem exigências antigas a ajustar.
 - **Conferido:** regra de origem (PR do agente aceito; outra branch e fork recusados), `npm test` com 32 testes passando e `npm run build` ok. O resultado da primeira execução do CI na main está registrado logo abaixo.
 - **Build registrado:** a primeira execução do CI na main (commit 8e3e0fc, run 43054017197) passou: `npm ci`, `npm run build` e `npm test` verdes.
+
+## Teste completo (ticket "Cores", issue #2) e retomada do esclarecimento (11/11/2026)
+
+- O ticket real "Cores" (pedido: trocar o azul por tons pastéis de rosa e lilás) criou a issue #2. O agente rodou (0,68 crédito), o N1 perguntou "Em qual parte da interface…?" e o caso ficou em `waiting-customer`. O segundo disparo (labeled) não repetiu nada.
+- **Problema encontrado:** a resposta da cliente no app ("Apenas na primeira página… Na home") ficava só no app. Nada a levava para a issue nem acordava o agente.
+- **Correção:**
+  - Com o caso em `waiting-customer`, a sincronização do app publica as respostas da cliente na issue como comentário `fluxo:cliente id=<mensagem>`, uma vez cada.
+  - O workflow escuta `issue_comment`, mas só aceita `fluxo:cliente` vindo da mesma conta que abriu a issue (a do app). Num repositório público, comentário de outra pessoa não gasta créditos.
+  - O controlador retoma o mesmo requestId na rodada seguinte, com a conversa pública como contexto, ids novos (`r2-…`) e sem repetir textos já publicados.
+- **Política mantida (decisão da dona do repositório):** a página inicial (`Landing.jsx`, `landing.css`) não entra na lista de caminhos permitidos. O PO agora devolve `human-review` antes de implementar quando o pedido exige arquivo fora da lista, para não gastar créditos à toa.
+- Conferido localmente: filtro de respostas (só a conta do app), pedido de retomada com a conversa, `npm test` com 32 testes passando.

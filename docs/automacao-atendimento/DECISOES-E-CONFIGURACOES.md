@@ -20,6 +20,8 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 | 11/11 | Entrega (etapa 05): PR com `Refs` (não `Fixes`); depois do merge, resposta do N1 com ID estável `entrega-merge` e issue fechada pelo controlador; no máximo uma rodada automática de correção, e depois decide o instrutor | Pedido da aula; retomadas sem duplicar |
 | 11/11 | `AUTO_MERGE=false` (padrão): o PR fica aberto para a demonstração e o merge é da dona do repositório | Ainda não houve autorização para merge automático |
 | 11/11 | Verificação mínima (etapa 04): CI `ci.yml` (`npm ci` + build + testes) em push e PRs de pessoas; nos PRs do agente, a mesma verificação roda sem token no `native-agents` e vira o status `fluxo/build-e-testes` do commit. Para aceitar código: origem do PR (branch `agente/<requestId>` do próprio repositório), requestId, caminhos permitidos e build do commit atual | PR aberto pelo token do Actions não dispara outros workflows; um PR qualquer que cite a issue não pode entregar nem fechar |
+| 11/11 | Esclarecimento: a resposta da cliente no app vai para a issue como `fluxo:cliente` e retoma o mesmo pedido; o workflow só aceita esses comentários da conta do app | O caso parava em `waiting-customer` para sempre; repo público não pode gastar créditos com comentário de terceiros |
+| 11/11 | A página inicial (home) **não** entra na lista de caminhos permitidos aos agentes; o PO barra antes de implementar | Decisão da dona do repositório: manter o escopo da aula (quadro de tarefas) |
 | 11/11 | Ticket aberto com login fica com **dono** (`ticket.usuario_id`); só o dono lê. Sem login, segue aberto (a interface ainda não tem login) | Etapa 03 |
 
 ## Configurações

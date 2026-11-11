@@ -20,6 +20,9 @@ name: Agentes nativos
 on:
   issues:
     types: [opened, labeled]
+  # Resposta da cliente a um esclarecimento (comentário "fluxo:cliente" que o app publica na issue).
+  issue_comment:
+    types: [created]
   pull_request_target:
     types: [opened, reopened, synchronize, closed]
   workflow_dispatch:
@@ -40,7 +43,15 @@ concurrency:
 
 jobs:
   agentes:
-    if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'origin:app')
+    # issues: só origin:app. issue_comment: só a resposta da cliente (fluxo:cliente) publicada pela mesma
+    # conta que abriu a issue (a do app) — comentário de outra pessoa num repo público não gasta créditos.
+    if: >-
+      (github.event_name != 'issues' && github.event_name != 'issue_comment')
+      || (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'origin:app'))
+      || (github.event_name == 'issue_comment' && !github.event.issue.pull_request
+          && contains(github.event.issue.labels.*.name, 'origin:app')
+          && startsWith(github.event.comment.body, '<!-- fluxo:cliente')
+          && github.event.comment.user.login == github.event.issue.user.login)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:

@@ -117,6 +117,17 @@ export function criarAutomacao(db, cfg = configDaAutomacao()) {
       enviadas.add(publico[1]);
       gravar(ticketId, { mensagens_enviadas: JSON.stringify([...enviadas]) });
     }
+    // Esclarecimento pendente: leva para a issue as respostas da cliente escritas no app (exceto a 1ª
+    // mensagem, que já é o corpo da issue). O comentário "fluxo:cliente" acorda o agente no mesmo pedido.
+    if (faseRemota === "waiting-customer") {
+      const daCliente = db.prepare("SELECT id, content FROM message WHERE ticket_id = ? AND role = 'user' ORDER BY criado_em, rowid").all(ticketId).slice(1);
+      for (const m of daCliente) {
+        if (enviadas.has(`cli:${m.id}`)) continue;
+        await github(cfg, "POST", `/repos/${cfg.repo}/issues/${reg.issue_number}/comments`, { body: `<!-- fluxo:cliente id=${m.id} -->\n${m.content}` });
+        enviadas.add(`cli:${m.id}`);
+        gravar(ticketId, { mensagens_enviadas: JSON.stringify([...enviadas]) });
+      }
+    }
     // Caso encerrado (merge entregue ou dúvida respondida): ticket resolvido e fim da sincronização.
     // A marca "__fim" só entra depois de trazer todas as mensagens desta leitura.
     if (FASES_ENCERRADAS.includes(faseRemota) && !enviadas.has("__fim")) {
