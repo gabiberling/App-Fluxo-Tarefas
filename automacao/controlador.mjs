@@ -283,8 +283,9 @@ async function preparar() {
   const novas = estado.fase === "waiting-customer"
     ? respostasDaCliente(dados.comentarios, issue).filter((r) => !(estado.clientesLidos ?? []).includes(r.id))
     : [];
-  const refazer = manual && ["executando", "human-review", "erro-execucao"].includes(estado.fase);
-  const retomar = novas.length > 0 || (refazer && estado.fase !== "executando");
+  const refazer = manual && ["executando", "human-review", "erro-execucao", "waiting-customer"].includes(estado.fase);
+  // Toda retomada leva a conversa; só não abre rodada nova quando refaz uma execução que parou no meio.
+  const retomar = novas.length > 0 || refazer;
   if (!retomar && !refazer && (atribuida || FASES_FINAIS.includes(estado.fase))) {
     return c.resumo(`Issue #${numero} já está na fase "${estado.fase}"; nada a repetir.`);
   }
@@ -292,7 +293,7 @@ async function preparar() {
 
   const pedido = { issue: numero, requestId: estado.requestId, resultPath: estado.resultPath, pedido: issue.body };
   if (retomar) {
-    pedido.rodada = (estado.rodada ?? 1) + 1;
+    pedido.rodada = estado.fase === "executando" ? (estado.rodada ?? 1) : (estado.rodada ?? 1) + 1;
     pedido.conversa = conversaPublica(dados.comentarios, issue);
     if (!dryRun) {
       estado.rodada = pedido.rodada;
