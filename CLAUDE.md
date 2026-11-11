@@ -21,7 +21,9 @@ Decisões, configurações e pendências: `docs/automacao-atendimento/DECISOES-E
 
 ## Automação no GitHub (etapa 03)
 - O ticket cria uma issue `origin:app` (`server/src/automacao.js`, ligado por `AGENT_RUNTIME=github-native` no `.env`). O controlador `automacao/controlador.mjs` roda em `.github/workflows/native-agents.yml`.
-- `AGENT_DRY_RUN=true` até o ensaio. Não troque sem pedido explícito.
+- Executor: `AGENT_EXECUTOR=copilot-cli` (padrão; de/para com Copilot Free) roda `copilot --agent=coordenador` no workflow; `cloud-agent` faz a atribuição paga. Modos do controlador: `preparar`, `finalizar` e `acompanhar`.
+- `AGENT_DRY_RUN` (variável do repositório; padrão `true`): só a dona do repositório decide desligar.
+- O PR do agente só abre se os arquivos estiverem em `PERMITIDOS` (controlador), o espelho da política: ao mudar um, mude o outro.
 - Workflow de diagnóstico: `.github/workflows/teste-copilot.yml` (manual).
 
 ## Segurança (regras fixas)

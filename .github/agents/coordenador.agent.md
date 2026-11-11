@@ -33,7 +33,9 @@ Relatório:
 - `updates`: cada item tem `id` estável, que não muda ao regravar o relatório.
 - `agents`: registro declarado de quem participou. As invocações reais aparecem na sessão.
 
-Sem informação na base (N1 ou Comercial não acharam a resposta): siga a regra "Sem informação na base" de `docs/automacao-atendimento/POLITICA-DE-AUTONOMIA.md`. Chame `POST /api/tickets/:id/knowledge-gap` com o texto do N1 e os dados organizados, e termine com `outcome: "human-review"`.
+Execução pelo Copilot CLI no GitHub Actions (de/para usado nesta cópia, sem cloud agent): siga o pedido recebido. Não faça commit, push nem PR e não chame a API do app; o workflow abre o PR a partir do relatório, se `outcome` for `code` e os arquivos estiverem na política. Sem informação na base, use `outcome: "human-review"` e acrescente ao relatório `"knowledgeGap": { "question", "missing", "searched" }`; o app move o cartão para "Sem resposta".
+
+Sem informação na base (N1 ou Comercial não acharam a resposta), quando o app estiver acessível: siga a regra "Sem informação na base" de `docs/automacao-atendimento/POLITICA-DE-AUTONOMIA.md`. Chame `POST /api/tickets/:id/knowledge-gap` com o texto do N1 e os dados organizados, e termine com `outcome: "human-review"`.
 
 Em `code`, abra um PR. Não faça merge nem feche a issue. Build e uma conferência bastam para a aula; não crie infraestrutura de testes. Se usar um controlador existente, respeite o contrato dele ou alinhe-o antes de ativar a cópia didática.
 

@@ -1,12 +1,23 @@
-# Etapa 03: controlador dos agentes nativos (Copilot) para issues abertas pelo app (origin:app).
-# Roda sempre o código da main confiável; nunca executa código do PR com estas credenciais.
-# Retomar manualmente: Actions > Agentes nativos > Run workflow, informando o número da issue.
+# Agentes nativos: issues abertas pelo app (origin:app) -> coordenador no Copilot CLI -> PR / resposta.
+# De/para do cloud agent (plano pago) para o Copilot CLI com Copilot Free. Ver docs/automacao-atendimento/.
+#
+# Segurança:
+# - Roda sempre a definição e o código da main (pull_request_target + checkout da main).
+# - O controlador é copiado para fora do repositório ANTES do agente; é essa cópia que executa.
+# - O passo do agente só recebe o token do Copilot: não faz push, não acessa a internet (URLs negadas)
+#   e só pode editar arquivos; .github, .claude, automacao, .env, server/dados e configs ficam bloqueados.
+# - Os testes rodam num passo sem nenhum token.
+# - Commit/push/PR são feitos pelo controlador, só se os arquivos mudados estiverem na política.
+#
+# Variáveis do repositório (Settings > Secrets and variables > Actions > Variables):
+#   AGENT_DRY_RUN  true (padrão) = só monta e mostra | false = executa
+#   AGENT_EXECUTOR copilot-cli (padrão) | cloud-agent (exige plano pago do Copilot)
+# Retomar: Actions > Agentes nativos > Run workflow, com o número da issue.
 name: Agentes nativos
 
 on:
   issues:
     types: [opened, labeled]
-  # pull_request_target usa a definição deste workflow na main (não a do PR); o checkout abaixo também é da main.
   pull_request_target:
     types: [opened, reopened, synchronize, closed]
   workflow_dispatch:
@@ -16,19 +27,23 @@ on:
         required: true
 
 permissions:
-  contents: read
+  contents: write
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: native-agents-${{ github.event.issue.number || inputs.issue || github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
-  controlar:
+  agentes:
     if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'origin:app')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
+    env:
+      AGENT_RUNTIME: ${{ vars.AGENT_RUNTIME || 'github-native' }}
+      AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN || 'true' }}
+      AGENT_EXECUTOR: ${{ vars.AGENT_EXECUTOR || 'copilot-cli' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -39,11 +54,51 @@ jobs:
         with:
           node-version: 24
 
-      - name: Controlador
-        run: node automacao/controlador.mjs
+      - name: Copiar o controlador da main (o agente não pode alterá-lo)
+        run: cp automacao/controlador.mjs "$RUNNER_TEMP/controlador.mjs"
+
+      - name: Preparar (lê a issue e decide)
+        id: preparar
+        run: node "$RUNNER_TEMP/controlador.mjs" preparar
         env:
           GITHUB_TOKEN: ${{ github.token }}
           COPILOT_AGENT_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
-          AGENT_RUNTIME: ${{ vars.AGENT_RUNTIME || 'github-native' }}
-          AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN || 'true' }}
           INPUT_ISSUE: ${{ inputs.issue }}
+
+      - name: Instalar dependências e Copilot CLI
+        if: steps.preparar.outputs.executar == 'true'
+        run: |
+          npm ci --no-audit --no-fund
+          npm install -g @github/copilot
+          # A CLI também leria .claude/ (espelho do Claude Code); fora do caminho durante o agente.
+          mv .claude "$RUNNER_TEMP/.claude-espelho"
+
+      - name: Coordenador (Copilot CLI)
+        if: steps.preparar.outputs.executar == 'true'
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
+        run: |
+          copilot --agent=coordenador --no-ask-user \
+            --allow-tool='write' --allow-tool='shell(npm run build)' \
+            --allow-tool='shell(git status)' --allow-tool='shell(git diff:*)' --allow-tool='shell(mkdir:*)' \
+            --deny-tool='write(.github/**)' --deny-tool='write(automacao/controlador.mjs)' --deny-tool='write(.env*)' \
+            --deny-tool='write(server/dados/**)' --deny-tool='write(package*.json)' --deny-tool='write(vite.config.js)' \
+            --deny-tool='write(scripts/**)' --deny-tool='shell(git push:*)' --deny-tool='shell(git commit:*)' \
+            -p "$(cat "$RUNNER_TEMP/pedido.txt")"
+
+      - name: Conferir build e testes (sem nenhum token)
+        id: conferir
+        if: steps.preparar.outputs.executar == 'true'
+        continue-on-error: true
+        run: |
+          mv "$RUNNER_TEMP/.claude-espelho" .claude
+          npm run build && npm test
+
+      - name: Finalizar (PR e mensagens)
+        if: always() && steps.preparar.outputs.executar == 'true'
+        run: node "$RUNNER_TEMP/controlador.mjs" finalizar
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE: ${{ steps.preparar.outputs.issue }}
+          TESTES_OK: ${{ steps.conferir.outcome == 'success' }}

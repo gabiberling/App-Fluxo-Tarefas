@@ -108,3 +108,15 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
 - Resultado: o backend criou a **issue #1** com o label `origin:app` (https://github.com/gabiberling/App-Fluxo-Tarefas/issues/1) e gravou `agent_request` com fase `issue-criada`.
 - O workflow `Agentes nativos` disparou duas vezes (opened e labeled), ambas com sucesso. A issue ficou com um único "Resumo interno do controlador" (fase `dry-run`), porque o segundo disparo releu o estado e atualizou o mesmo comentário. A atribuição a `copilot-swe-agent[bot]` com `custom_agent=coordenador` foi montada e mostrada no resumo do Actions, **sem envio** (`AGENT_DRY_RUN=true`).
 - Falta, para o ensaio: trocar a atribuição do cloud agent pago pelo passo com Copilot CLI (`copilot --agent=coordenador`) e então usar `AGENT_DRY_RUN=false`.
+
+## Ensaio: troca do cloud agent pelo Copilot CLI (11/11/2026)
+
+- O controlador (`automacao/controlador.mjs`) agora tem os modos `preparar`, `finalizar` e `acompanhar`. Com `AGENT_EXECUTOR=copilot-cli` (padrão) e `AGENT_DRY_RUN=false`, o workflow roda `copilot --agent=coordenador` com o pedido e, depois, o controlador lê o relatório. Com outcome `code`, ele confere os arquivos contra a política, abre o PR (`Refs #issue`, sem merge) e publica o resumo e as mensagens do N1 na issue. A atribuição ao cloud agent continua disponível com `AGENT_EXECUTOR=cloud-agent`.
+- Segurança do workflow:
+  - O controlador é copiado da main antes do agente rodar.
+  - O agente só tem o token do Copilot, não tem push nem internet, e a escrita fica bloqueada em `.github`, `.env`, `server/dados`, configs e no próprio controlador.
+  - Os testes rodam sem token.
+  - O PR só abre se os arquivos estiverem na política e o build e os testes passarem.
+- Sem informação na base pelo GitHub: o relatório traz `knowledgeGap`, o controlador o coloca no estado da issue e o app move o cartão para "Sem resposta" na sincronização.
+- Configuração do repositório: ligado "Allow GitHub Actions to create and approve pull requests" (`can_approve_pull_request_reviews=true`), necessário para o workflow abrir PR. O padrão de permissões continua leitura.
+- Conferido localmente: pedido do CLI montado, filtro da política (produto permitido; workflow, login, atendimento, package.json e controlador bloqueados), `npm test` com 32 testes passando e `npm run build` ok.

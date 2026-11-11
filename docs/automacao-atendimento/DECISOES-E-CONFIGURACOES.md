@@ -16,6 +16,7 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 | 11/11 | **De/para com workflows** (sugestão do professor): o Copilot CLI roda no GitHub Actions com os agents de `.github/agents/`, usando o **Copilot Free** e o secret `COPILOT_AGENT_TOKEN` | Grátis (Actions é ilimitado em repo público; CLI incluída no Copilot Free); testado com sucesso |
 | 11/11 | Agente **banco-de-dados**: só ele cria migrações, sempre no fim da lista, via PR; perda de dados vira `human-review` | Pedido da aluna; política da aula proíbe banco aos demais |
 | 11/11 | Lacunas de informação usam o desfecho `human-review` (já existente no contrato), sem criar outro | Não quebrar o contrato do relatório da aula |
+| 11/11 | No ensaio, o agente roda no Actions só com o token do Copilot, sem push e sem internet; commit, push e PR ficam com o controlador da main, depois de conferir a política e os testes | Um ticket mal-intencionado não consegue fazer o agente mexer em workflow, banco ou credenciais |
 | 11/11 | Ticket aberto com login fica com **dono** (`ticket.usuario_id`); só o dono lê. Sem login, segue aberto (a interface ainda não tem login) | Etapa 03 |
 
 ## Configurações
@@ -27,10 +28,13 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 - [x] Workflows na `main`: `teste-copilot.yml` (manual) e `native-agents.yml` (controlador, `AGENT_DRY_RUN=true`).
 - [x] **`.env` local** com `AGENT_RUNTIME=github-native`, `AGENT_DRY_RUN=true`, `GITHUB_REPO` e **`GITHUB_ISSUES_TOKEN`** (fine-grained, só este repositório, Issues: leitura e escrita). Fica só no computador; **não** é secret do repositório (o app local não lê secrets do GitHub). O secret `ISSUES_TOKEN`, criado por engano no repositório, foi excluído.
 - [x] **Label `origin:app`** criado no repositório.
+- [x] **Apelidos dos tokens** em *Developer settings → Fine-grained tokens* (só nomes): `App-Fluxo-Tarefas` = token do secret `COPILOT_AGENT_TOKEN` (Copilot Requests); `App-Fluxo-Tarefas-Git` = token do `.env` `GITHUB_ISSUES_TOKEN` (Issues). Os dois vencem em 09/02/2027. Não apagar: os dois estão em uso.
 
 ### Pendentes
 - [ ] (Opcional) Variáveis do repositório `AGENT_RUNTIME` e `AGENT_DRY_RUN` em *Settings → Secrets and variables → Actions → Variables*. Sem elas, o workflow usa `github-native` e `true`.
-- [ ] **Ensaio:** trocar no controlador a atribuição ao `copilot-swe-agent[bot]` (cloud agent pago) por um passo que roda `copilot --agent=coordenador` no próprio workflow (de/para), e só então usar `AGENT_DRY_RUN=false`.
+- [x] **Troca para o Copilot CLI:** `native-agents.yml` roda `copilot --agent=coordenador` (`AGENT_EXECUTOR=copilot-cli`, padrão); a atribuição paga continua disponível com `AGENT_EXECUTOR=cloud-agent`.
+- [x] **Actions pode abrir PR:** *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* ligado.
+- [ ] **Desligar o dry-run:** variável do repositório `AGENT_DRY_RUN=false` (`gh variable set AGENT_DRY_RUN --body false`). Só com o ok da dona do repositório; para voltar, apague a variável ou use `true`.
 - [ ] **Validade dos tokens:** renovar o `COPILOT_AGENT_TOKEN` e o `GITHUB_ISSUES_TOKEN` antes de vencerem.
 
 ## Decisões em aberto

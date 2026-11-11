@@ -19,6 +19,11 @@ O atendimento é automático: não há atendente humano. Quando a base não tem 
 
 Se a dúvida só estiver incompleta, faça uma pergunta curta ao cliente em vez de registrar lacuna.
 
+Quando o agente roda no GitHub Actions (Copilot CLI), a API do app não está acessível. Nesse caso, em vez do passo 2, ponha no relatório `"knowledgeGap": { "question", "missing", "searched" }`. O controlador leva isso para a issue e o app move o cartão na próxima sincronização.
+
+## Barreira automática no workflow
+O workflow `native-agents.yml` só abre PR se todos os arquivos mudados estiverem na lista "pode mudar" desta política, ou forem a migração e os testes do agente banco-de-dados (lista espelhada em `PERMITIDOS`, em `automacao/controlador.mjs`), e se o build e os testes passarem. Caso contrário, o resultado é `human-review` e nada é publicado em branch.
+
 ## Pedido de mudança no produto
 Basta registrar três itens:
 - **Problema:** o que acontece hoje.

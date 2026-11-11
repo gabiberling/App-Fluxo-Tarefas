@@ -72,6 +72,34 @@ function renumerarColuna(db, listId) {
   db.prepare("SELECT id FROM card WHERE list_id = ? ORDER BY position, rowid").all(listId).forEach((c, i) => gravar.run(i, c.id));
 }
 
+/** Leva o cartão do ticket para "Sem resposta" com a descrição organizada (recria o cartão se foi apagado). */
+function moverCartaoParaSemResposta(db, t, descricao, quando) {
+  const destino = colunaSemResposta(db);
+  const atual = t.card_id && db.prepare("SELECT * FROM card WHERE id = ?").get(t.card_id);
+  let cardId;
+  if (atual) {
+    const posicao = db.prepare("SELECT COALESCE(MAX(position), -1) + 1 AS p FROM card WHERE list_id = ? AND id <> ?").get(destino, atual.id).p;
+    db.prepare("UPDATE card SET list_id = ?, description = ?, position = ? WHERE id = ?").run(destino, descricao, posicao, atual.id);
+    if (atual.list_id !== destino) renumerarColuna(db, atual.list_id);
+    cardId = atual.id;
+  } else {
+    cardId = criarCartaoDoTicket(db, t.title, descricao, destino);
+  }
+  db.prepare("UPDATE ticket SET card_id = ?, atualizado_em = ? WHERE id = ?").run(cardId, quando, t.id);
+}
+
+/**
+ * Lacuna vinda da automação no GitHub (relatório com knowledgeGap): só move o cartão.
+ * A mensagem ao cliente chega separada, como publicText do N1.
+ */
+export function registrarLacuna(db, ticketId, { question, missing, searched }) {
+  const t = db.prepare("SELECT * FROM ticket WHERE id = ?").get(ticketId);
+  if (!t) return;
+  const corta = (v, n) => String(v ?? "").trim().slice(0, n) || "(não informado)";
+  const descricao = descricaoSemResposta({ ticketId, question: corta(question, 500), missing: corta(missing, 1000), searched: corta(searched, 1000) });
+  transacao(db, () => moverCartaoParaSemResposta(db, t, descricao, new Date().toISOString()));
+}
+
 /** Cartão no fim da primeira coluna do quadro Atendimento. */
 function criarCartaoDoTicket(db, titulo, descricao, listId = primeiraColunaDoAtendimento(db)) {
   const id = randomUUID();
@@ -166,18 +194,7 @@ export function rotasDeTickets(app, db, automacao = null) {
     });
     return transacao(db, () => {
       const m = inserirMensagem(t.id, "agent", content);
-      const destino = colunaSemResposta(db);
-      const atual = t.card_id && db.prepare("SELECT * FROM card WHERE id = ?").get(t.card_id);
-      let cardId;
-      if (atual) {
-        const posicao = db.prepare("SELECT COALESCE(MAX(position), -1) + 1 AS p FROM card WHERE list_id = ? AND id <> ?").get(destino, atual.id).p;
-        db.prepare("UPDATE card SET list_id = ?, description = ?, position = ? WHERE id = ?").run(destino, descricao, posicao, atual.id);
-        if (atual.list_id !== destino) renumerarColuna(db, atual.list_id);
-        cardId = atual.id;
-      } else {
-        cardId = criarCartaoDoTicket(db, t.title, descricao, destino);
-      }
-      db.prepare("UPDATE ticket SET card_id = ?, atualizado_em = ? WHERE id = ?").run(cardId, m.criado_em, t.id);
+      moverCartaoParaSemResposta(db, t, descricao, m.criado_em);
       return { message: saidaMensagem(m), ticket: saidaTicket(buscar(t.id)) };
     });
   });

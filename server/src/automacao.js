@@ -4,6 +4,7 @@
 // A atribuição ao Copilot (chamada paga) fica no controlador do Actions, com AGENT_DRY_RUN.
 // Credencial local: GITHUB_ISSUES_TOKEN (.env, fora do Git). Não é o COPILOT_AGENT_TOKEN.
 import { randomUUID } from "node:crypto";
+import { registrarLacuna } from "./tickets.js";
 
 export function configDaAutomacao(env = process.env) {
   return {
@@ -98,6 +99,12 @@ export function criarAutomacao(db, cfg = configDaAutomacao()) {
       if (estado) {
         const e = JSON.parse(estado[1]);
         gravar(ticketId, { pr_number: e.pr ?? null, fase: e.fase ?? reg.fase });
+        // Sem informação na base: o cartão vai para "Sem resposta" (uma vez só).
+        if (e.lacuna && !enviadas.has("lacuna")) {
+          registrarLacuna(db, ticketId, e.lacuna);
+          enviadas.add("lacuna");
+          gravar(ticketId, { mensagens_enviadas: JSON.stringify([...enviadas]) });
+        }
       }
       const publico = c.body.match(RE_PUBLICO);
       if (!publico || enviadas.has(publico[1])) continue;
@@ -111,7 +118,7 @@ export function criarAutomacao(db, cfg = configDaAutomacao()) {
   }
 
   async function sincronizarTodos() {
-    const abertos = db.prepare("SELECT ticket_id FROM agent_request WHERE issue_number IS NOT NULL AND fase NOT IN ('concluido')").all();
+    const abertos = db.prepare("SELECT ticket_id FROM agent_request WHERE issue_number IS NOT NULL AND fase NOT IN ('concluido', 'pr-fechado')").all();
     for (const { ticket_id } of abertos) {
       try { await sincronizar(ticket_id); } catch (e) { console.error("[automação]", e.message); }
     }
