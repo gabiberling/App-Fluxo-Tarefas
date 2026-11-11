@@ -93,6 +93,11 @@ IDs são strings, `position` é número e erros voltam como `{error:"mensagem"}`
 com o status adequado. Excluir um quadro apaga listas e cartões em cascata;
 mover um cartão reordena as duas listas na mesma transação.
 
+## Automação do atendimento (aula)
+
+Contexto, limites e agents: `docs/automacao-atendimento/` (PRODUTO, POLITICA-DE-AUTONOMIA, PROGRESSO e
+DECISOES-E-CONFIGURACOES), `automacao/` e `.github/agents/`. Configuração local: copie `.env.example` para `.env`.
+
 ## Onde fica cada coisa
 
 | Pasta | O que tem |
