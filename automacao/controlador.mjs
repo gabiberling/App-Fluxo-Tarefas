@@ -211,7 +211,8 @@ function contexto() {
   /** Publica uma mensagem pública com ID estável (não repete se já foi enviada). */
   async function publicarUma(numero, estado, id, texto) {
     // Rodadas de retomada ganham prefixo no id, para não colidir com ids de rodadas anteriores.
-    const idFinal = estado.rodada > 1 && id !== ID_ENTREGA ? `r${estado.rodada}-${id}` : id;
+    const prefixo = `r${estado.rodada}-`;
+    const idFinal = estado.rodada > 1 && id !== ID_ENTREGA && !String(id).startsWith(prefixo) ? `${prefixo}${id}` : id;
     if (!id || !texto?.trim() || estado.mensagens.includes(idFinal) || estado.jaPublicados?.has(texto.trim())) return;
     await gh("POST", `/repos/${repo}/issues/${numero}/comments`, { body: `<!-- fluxo:publico id=${idFinal} -->\n${texto.trim()}` });
     estado.mensagens.push(idFinal);
