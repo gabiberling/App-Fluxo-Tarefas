@@ -1,0 +1,38 @@
+# Teste manual: confere se o COPILOT_AGENT_TOKEN e o Copilot Free funcionam no Actions
+# e se o Copilot CLI encontra os agents de .github/agents/. Só leitura; não altera nada.
+# Rodar em: Actions > Teste do Copilot CLI > Run workflow. Gasta 2 pedidos da cota do Copilot.
+name: Teste do Copilot CLI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v7
+
+      - name: Instalar Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: 1. Autenticação (token + cota)
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
+        run: |
+          copilot -p "Responda apenas com a palavra OK." --no-ask-user | tee resposta-1.txt
+          { echo "### 1. Autenticação"; echo; cat resposta-1.txt; echo; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 2. Agente n1 da aula
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
+        run: |
+          copilot --agent=n1 --no-ask-user \
+            -p "Pergunta fictícia de teste: como eu abro um novo ticket de atendimento? Responda em uma frase." \
+            | tee resposta-2.txt
+          { echo "### 2. Agente n1"; echo; cat resposta-2.txt; } >> "$GITHUB_STEP_SUMMARY"
