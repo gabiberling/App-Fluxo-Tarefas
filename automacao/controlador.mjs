@@ -153,6 +153,10 @@ export const foraDaPolitica = (arquivos, resultPath) =>
 export const textoEntrega = (relatorio) => relatorio?.deliveryText?.trim()
   || "Pronto! A mudança que você pediu foi integrada ao código do Fluxo. Ela aparece no seu app depois que a instalação local for atualizada.";
 
+/** Caminhos da saída de `git status --porcelain` (formato "XY caminho" ou "XY antigo -> novo"). */
+export const arquivosMudados = (saida) => saida.split("\n").filter((l) => l.trim())
+  .map((l) => l.slice(3).replace(/^.* -> /, "").replace(/^"(.*)"$/, "$1"));
+
 /** O PR é o do agente para este pedido? (mesmo repositório e branch agente/<requestId>). */
 export const prDoAgente = (pr, repo, requestId) =>
   pr?.head?.ref === `agente/${requestId}` && (pr.head.repo?.full_name ?? repo) === repo;
@@ -355,7 +359,8 @@ async function finalizar() {
     return c.salvar(numero, salvo, estado);
   }
 
-  const mudados = git("status", "--porcelain", "-uall").split("\n").filter(Boolean).map((l) => l.slice(3).replace(/^.* -> /, ""));
+  // Sem trim: a 1ª linha do --porcelain começa com espaço (" M arquivo") e as 3 primeiras colunas são o status.
+  const mudados = arquivosMudados(execFileSync("git", ["status", "--porcelain", "-uall"], { encoding: "utf8" }));
   const codigo = mudados.filter((f) => f !== estado.resultPath);
   const proibidos = foraDaPolitica(mudados, estado.resultPath);
   const outcome = relatorio.outcome;
