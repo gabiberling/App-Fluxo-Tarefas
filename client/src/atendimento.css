@@ -1,0 +1,183 @@
+/* Atendimento: lateral com histórico de tickets e conversa no estilo ChatGPT.
+   Usa os tokens de estilos.css; nada de cor nova fora dos selos de estado. */
+
+/* ---------- navegação principal (todas as áreas) ---------- */
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-link {
+  display: flex; align-items: center; gap: var(--e2);
+  min-height: 40px; padding: var(--e2) var(--e3);
+  border-radius: var(--r2);
+  color: var(--secundario); font-weight: 500; text-decoration: none;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+.nav-link:hover { background: var(--fundo); color: var(--noite); }
+.nav-link[aria-current="page"] { background: var(--oceano-fraco); color: var(--noite); font-weight: 600; }
+
+/* ---------- lateral do atendimento ---------- */
+
+.novo-ticket { justify-content: flex-start; }
+.tickets { display: flex; flex-direction: column; gap: var(--e3); min-height: 0; }
+.tickets-grupo-titulo { font-size: 12px; font-weight: 600; color: var(--secundario); padding: 0 var(--e2) var(--e1); }
+.tickets-lista { display: flex; flex-direction: column; gap: 2px; }
+.tickets .lateral-item { padding: 2px var(--e1) 2px var(--e2); }
+.tickets .lateral-escolha { padding: var(--e2) var(--e1); font-weight: 400; }
+/* Excluir só aparece no hover/foco, como no ChatGPT: o título usa a largura toda. */
+.tickets .lateral-acoes { display: none; opacity: 1; }
+.tickets .lateral-item:hover .lateral-acoes,
+.tickets .lateral-item:focus-within .lateral-acoes { display: flex; }
+
+.ticket-estado { width: 8px; height: 8px; border-radius: var(--r-cheio); flex: none; background: var(--borda-forte); }
+.ticket-estado[data-estado="aguardando"] { background: #c77700; }
+.ticket-estado[data-estado="respondido"] { background: var(--oceano); }
+.ticket-estado[data-estado="resolvido"] { background: #2e7d4f; }
+
+.selo {
+  display: inline-flex; align-items: center;
+  padding: 2px var(--e2); border-radius: var(--r-cheio);
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--fundo); color: var(--secundario);
+}
+.selo[data-estado="aguardando"] { background: #fff4e0; color: #8a5300; }
+.selo[data-estado="respondido"] { background: var(--oceano-fraco); color: var(--oceano-escuro); }
+.selo[data-estado="resolvido"] { background: #e6f4ec; color: #1f6b3e; }
+
+/* ---------- área da conversa ---------- */
+
+.chat {
+  min-width: 0;
+  display: flex; flex-direction: column;
+  background: var(--superficie);
+}
+
+.chat-topo {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e4);
+  padding: var(--e3) var(--e6);
+  border-bottom: 1px solid var(--borda);
+}
+.chat-topo-texto { display: flex; align-items: center; gap: var(--e3); min-width: 0; }
+.chat-titulo {
+  font-size: var(--titulo-3); font-weight: 600; color: var(--noite);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chat-topo-acoes { display: flex; align-items: center; gap: var(--e1); flex: none; }
+.chat-topo-acoes a.botao { text-decoration: none; }
+
+.chat-rolagem { flex: 1; overflow-y: auto; }
+.chat-coluna {
+  max-width: 768px; margin: 0 auto;
+  padding: var(--e8) var(--e4) var(--e6);
+  display: flex; flex-direction: column; gap: var(--e6);
+}
+.chat-carregando { padding: var(--e8); justify-content: center; }
+
+/* mensagens */
+.msg-hora { font-size: 12px; font-weight: 400; color: var(--secundario); font-variant-numeric: tabular-nums; }
+
+.msg-usuario { align-self: flex-end; max-width: min(80%, 560px); display: grid; justify-items: end; gap: var(--e1); }
+.msg-balao {
+  background: var(--fundo);
+  padding: var(--e3) var(--e4);
+  border-radius: 20px 20px var(--r1) 20px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.msg-usuario[data-pendente] .msg-balao { opacity: .6; }
+
+.msg-agente { display: grid; grid-template-columns: 32px 1fr; gap: var(--e3); align-items: start; }
+.msg-avatar {
+  width: 32px; height: 32px; border-radius: var(--r-cheio);
+  display: grid; place-items: center;
+  background: var(--oceano); color: #fff;
+}
+.msg-corpo { display: grid; gap: var(--e1); min-width: 0; padding-top: 4px; }
+.msg-autor { font-weight: 600; color: var(--noite); display: flex; gap: var(--e2); align-items: baseline; }
+.msg-texto { white-space: pre-wrap; overflow-wrap: anywhere; text-wrap: pretty; }
+.msg-aguardando .msg-texto { color: var(--secundario); display: flex; align-items: center; gap: var(--e2); }
+
+.digitando { display: inline-flex; gap: 3px; }
+.digitando i {
+  width: 6px; height: 6px; border-radius: var(--r-cheio); background: var(--borda-forte);
+  animation: piscar 1.2s ease-in-out infinite;
+}
+.digitando i:nth-child(2) { animation-delay: .15s; }
+.digitando i:nth-child(3) { animation-delay: .3s; }
+@keyframes piscar { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; background: var(--secundario); } }
+
+/* caixa de mensagem */
+.chat-rodape { padding: 0 var(--e4) var(--e4); max-width: calc(768px + 2 * var(--e4)); width: 100%; margin: 0 auto; display: grid; gap: var(--e2); }
+.chat-rodape .aviso, .chat-inicio .aviso { margin: 0; }
+
+.composer {
+  display: flex; align-items: flex-end; gap: var(--e2);
+  padding: var(--e2) var(--e2) var(--e2) 20px;
+  border: 1px solid var(--borda-forte);
+  border-radius: 26px;
+  background: var(--superficie);
+  box-shadow: var(--sombra-2);
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+.composer:focus-within { border-color: var(--oceano); box-shadow: 0 0 0 3px rgb(21 84 173 / 14%), var(--sombra-2); }
+.composer-texto {
+  flex: 1; min-width: 0;
+  border: 0; outline: none; background: transparent; resize: none;
+  padding: 8px 0; line-height: 1.5; max-height: 200px;
+  font-size: 15px;
+}
+.composer-texto::placeholder { color: var(--secundario); opacity: .85; }
+.composer-enviar {
+  width: 36px; height: 36px; flex: none;
+  display: grid; place-items: center;
+  border: 0; border-radius: var(--r-cheio);
+  background: var(--noite); color: #fff; cursor: pointer;
+  transition: background-color 160ms ease-out, transform 120ms ease-out;
+}
+.composer-enviar:hover:not(:disabled) { background: var(--oceano); }
+.composer-enviar:active:not(:disabled) { transform: scale(.94); }
+.composer-enviar:disabled { background: var(--borda-forte); cursor: not-allowed; }
+
+.chat-nota { text-align: center; font-size: 12px; color: var(--secundario); }
+
+/* tela de novo ticket */
+.chat-inicio {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--e4);
+  padding: var(--e8) var(--e4);
+  text-align: center;
+}
+.chat-inicio-icone {
+  width: 56px; height: 56px; border-radius: var(--r-cheio);
+  display: grid; place-items: center;
+  background: var(--oceano-fraco); color: var(--oceano);
+}
+.chat-inicio h1 { font-size: var(--titulo-1); line-height: 1.2; letter-spacing: -0.02em; color: var(--noite); text-wrap: balance; }
+.chat-inicio > p { color: var(--secundario); max-width: 52ch; text-wrap: pretty; }
+.chat-inicio-caixa, .chat-inicio .aviso { width: min(720px, 100%); text-align: left; }
+.chat-inicio-caixa { margin-top: var(--e2); }
+
+.sugestoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--e2); max-width: 720px; }
+.sugestao {
+  border: 1px solid var(--borda); border-radius: var(--r-cheio);
+  background: var(--superficie); color: var(--secundario);
+  padding: var(--e2) var(--e4); cursor: pointer;
+  transition: background-color 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out;
+}
+.sugestao:hover { background: var(--fundo); color: var(--noite); border-color: var(--borda-forte); }
+
+/* ---------- responsivo ---------- */
+
+@media (min-width: 768px) {
+  .chat { height: 100vh; }
+}
+
+@media (max-width: 767px) {
+  .nav { flex-direction: row; }
+  .nav-link { flex: 1; justify-content: center; }
+  .tickets { max-height: 32vh; overflow-y: auto; }
+  .chat { min-height: 70vh; }
+  .chat-topo { padding: var(--e3) var(--e4); flex-wrap: wrap; }
+  .chat-topo-texto { flex-wrap: wrap; }
+  .chat-rodape { position: sticky; bottom: 0; background: var(--superficie); padding-top: var(--e2); }
+  .chat-inicio h1 { font-size: var(--titulo-2); }
+  .tickets .lateral-acoes { display: flex; }
+}
