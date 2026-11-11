@@ -1,17 +1,6 @@
 .inicio {
   --inicio-espaco: 64px;
   --inicio-titulo: 48px;
-  --oceano: #8062a8;
-  --oceano-escuro: #684987;
-  --oceano-fraco: #f0eaf7;
-  --noite: #493753;
-  --fundo: #f7f1f8;
-  --superficie: #fffcfe;
-  --superficie-vidro: rgb(255 255 255 / 82%);
-  --texto: #413447;
-  --secundario: #766b7b;
-  --borda: #e9ddeb;
-  --borda-forte: #d9c8df;
   min-height: 100vh;
   background: var(--superficie);
   font-size: 16px;
@@ -28,8 +17,8 @@
 .inicio-pular { position: fixed; top: -100px; left: 16px; z-index: 50; padding: 12px; background: var(--superficie); color: var(--oceano); }
 .inicio-pular:focus { top: 16px; }
 .inicio-hero { display: grid; grid-template-columns: .85fr 1.15fr; gap: 48px; align-items: center; padding-block: 96px; }
-.inicio-assinatura { display: flex; align-items: center; gap: var(--e2); font-size: 14px; font-weight: 600; color: #a65e81; margin-bottom: var(--e6); }
-.inicio-assinatura > span { width: 8px; height: 8px; background: #d18ba8; border-radius: var(--r-cheio); }
+.inicio-assinatura { display: flex; align-items: center; gap: var(--e2); font-size: 14px; font-weight: 600; color: var(--oceano); margin-bottom: var(--e6); }
+.inicio-assinatura > span { width: 8px; height: 8px; background: var(--oceano); border-radius: var(--r-cheio); }
 .inicio h1 { font-size: var(--inicio-titulo); line-height: 1.1; letter-spacing: -.045em; color: var(--noite); max-width: 12ch; }
 .inicio-descricao { margin-top: var(--e6); color: var(--secundario); font-size: 18px; line-height: 1.7; max-width: 43ch; }
 .inicio-hero-acoes { display: flex; flex-wrap: wrap; gap: var(--e6); align-items: center; margin-top: var(--e8); }
@@ -58,7 +47,7 @@
 .inicio-secao-topo h2, .inicio-final h2 { font-size: 32px; line-height: 1.2; letter-spacing: -.025em; }
 .inicio-secao-topo > p { max-width: 35ch; color: var(--secundario); }
 .inicio-recursos-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 48px; }
-.inicio-recurso-icone { display: inline-flex; padding: var(--e3); background: #f8eaf0; color: #a65e81; border-radius: var(--r2); margin-bottom: var(--e6); }
+.inicio-recurso-icone { display: inline-flex; padding: var(--e3); background: var(--oceano-fraco); color: var(--oceano); border-radius: var(--r2); margin-bottom: var(--e6); }
 .inicio-recursos-grade h3 { font-size: 18px; margin-bottom: var(--e3); }
 .inicio-recursos-grade p { color: var(--secundario); line-height: 1.7; max-width: 34ch; }
 .inicio-final { background: var(--fundo); border: 1px solid var(--borda); border-radius: var(--r3); padding: 48px; display: flex; align-items: center; justify-content: space-between; gap: var(--e8); }

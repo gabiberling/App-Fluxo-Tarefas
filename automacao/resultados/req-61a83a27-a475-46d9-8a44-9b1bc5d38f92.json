@@ -1,0 +1,45 @@
+{
+  "requestId": "req-61a83a27-a475-46d9-8a44-9b1bc5d38f92",
+  "outcome": "code",
+  "publicText": "A Home foi ajustada para usar as cores padrão do site.",
+  "agents": ["n1", "po", "desenvolvedor", "revisor"],
+  "allowedFiles": ["client/src/landing.css"],
+  "criteria": [
+    {
+      "id": "home-cores-padrao",
+      "description": "Na Home, os elementos visuais usam o padrão de cores das outras áreas, sem os tons exclusivos atuais."
+    }
+  ],
+  "updates": [
+    {
+      "id": "u1-n1",
+      "agent": "n1",
+      "internalText": "Pedido claro: restaurar na Home as cores padrão presentes nas outras áreas; o encaminhamento é para o PO.",
+      "publicText": "Entendi: você quer que a Home volte às cores padrão usadas nas outras áreas do site."
+    },
+    {
+      "id": "u2-po",
+      "agent": "po",
+      "internalText": "A Home difere do padrão visual. Ajustar apenas client/src/landing.css para usar os tokens de client/src/estilos.css; não envolve banco.",
+      "publicText": "Vou ajustar as cores da Home para seguir o padrão visual do restante do site."
+    },
+    {
+      "id": "u3-desenvolvedor",
+      "agent": "desenvolvedor",
+      "internalText": "Removeu definições de cores locais e trocou cores exclusivas da assinatura e dos ícones pelos tokens do tema global em client/src/landing.css.",
+      "publicText": "Ajustei as cores da Home para usar o padrão global do site."
+    },
+    {
+      "id": "u4-revisor",
+      "agent": "revisor",
+      "internalText": "Parecer: diff atende ao pedido e usa os tokens globais, sem arquivos indevidos. Build, testes e conferência visual não foram realizados.",
+      "publicText": "A alteração foi revisada."
+    }
+  ],
+  "verification": "Conferi o diff e confirmei que não restam cores literais exclusivas nesse arquivo; não rodei build nem testes conforme solicitado, e falta a conferência visual no app por não haver navegador.",
+  "review": {
+    "ok": true,
+    "notes": "O diff atende ao pedido, usa os tokens globais e não inclui arquivos indevidos; build, testes e conferência visual não foram executados."
+  },
+  "deliveryText": "O código foi integrado. Atualize o app local para ver as cores padrão na Home."
+}
