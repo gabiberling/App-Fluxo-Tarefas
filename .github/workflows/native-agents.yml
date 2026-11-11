@@ -5,8 +5,8 @@
 # - Roda sempre a definição e o código da main (pull_request_target + checkout da main).
 # - O controlador é copiado para fora do repositório ANTES do agente; é essa cópia que executa.
 # - O passo do agente só recebe o token do Copilot: não faz push, não acessa a internet (URLs negadas),
-#   não roda build/testes e só pode editar arquivos; .github, .env, server/dados, configs e o
-#   controlador ficam bloqueados.
+#   não roda build/testes e só pode editar arquivos; .github, .claude, .env, server/dados e o
+#   controlador ficam bloqueados (o resto do código é permitido; o PR exige aprovação da dona).
 # - Build e testes rodam em passos sem nenhum token.
 # - Commit/push/PR/merge são feitos pelo controlador, só se os arquivos mudados estiverem na política.
 #
@@ -95,8 +95,8 @@ jobs:
             --allow-tool='write' \
             --allow-tool='shell(git status)' --allow-tool='shell(git diff:*)' --allow-tool='shell(mkdir:*)' \
             --deny-tool='write(.github/**)' --deny-tool='write(automacao/controlador.mjs)' --deny-tool='write(.env*)' \
-            --deny-tool='write(server/dados/**)' --deny-tool='write(package*.json)' --deny-tool='write(vite.config.js)' \
-            --deny-tool='write(scripts/**)' --deny-tool='shell(git push:*)' --deny-tool='shell(git commit:*)' \
+            --deny-tool='write(server/dados/**)' --deny-tool='write(.claude/**)' \
+            --deny-tool='shell(git push:*)' --deny-tool='shell(git commit:*)' \
             -p "$(cat "$1")"
           EOF
 

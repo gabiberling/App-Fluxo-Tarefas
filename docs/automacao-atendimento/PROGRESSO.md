@@ -185,3 +185,11 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
 - Conferido localmente: filtro de respostas (só a conta do app), pedido de retomada com a conversa, `npm test` com 32 testes passando.
 - **Retomada real (run 43059557960, 0,78 crédito):** a resposta da cliente chegou à issue antes do workflow novo estar na main, então a retomada foi feita uma vez por `workflow_dispatch`, com a issue #2. O coordenador retomou o mesmo requestId com a conversa, o N1 confirmou o entendimento e o PO barrou a mudança porque a home está fora da política. Resultado: `human-review`, sem PR e sem código. As mensagens chegaram ao chat do ticket. Ajuste: o id já com prefixo da rodada (`r2-…`) não ganha prefixo de novo.
 - **Custo total do ticket "Cores":** 0,68 + 0,78 = 1,46 crédito.
+
+## Política liberada com aprovação obrigatória (11/11/2026)
+
+- **Decisão da dona do repositório:** os agentes podem mudar todo o código; ela aprova cada PR antes de ele entrar na `main`.
+- **Política e controlador:** a lista "pode mudar" virou uma lista de exceções (`BLOQUEADOS`): `.github/`, `.claude/`, `.env`, `server/dados/` e `automacao/controlador.mjs`, por motivos técnicos e de segurança. PO, Desenvolvedor e Revisor foram atualizados. O workflow deixou de bloquear `package*.json`, `vite.config.js` e `scripts/`.
+- **Aprovação:** `.github/CODEOWNERS` com `@gabiberling` e proteção da `main` exigindo 1 aprovação de code owner.
+- **Retomada manual:** `workflow_dispatch` agora também refaz casos em `human-review` ou `erro-execucao`, com a conversa como contexto. A pessoa que dispara é quem autoriza a nova tentativa.
+- As cores do ticket "Cores" serão feitas pelo Copilot, retomando a issue #2. Nada foi alterado à mão.

@@ -17,13 +17,14 @@ Decisões, configurações e pendências: `docs/automacao-atendimento/DECISOES-E
 - Agents da aula em `.github/agents/*.agent.md`: coordenador, n1, comercial, po, banco-de-dados, desenvolvedor e revisor. Eles são a **única fonte** das regras.
 - Espelho para o Claude Code: `.claude/agents/<nome>.md` (só manda ler o `.agent.md`). O coordenador é o comando `/coordenador` (`.claude/commands/coordenador.md`), porque subagent não chama subagent. Ao criar ou alterar um agent, mantenha os dois lados.
 - Sem informação na base: o agente avisa o cliente sem prometer contato humano e usa `POST /api/tickets/:id/knowledge-gap` (o cartão vai para "Sem resposta").
-- Mudança de banco só pelo agente banco-de-dados, via PR; merge sempre por pessoa.
+- Mudança de banco só pelo agente banco-de-dados, via PR; merge sempre pela dona do repositório (aprovação obrigatória).
+- Mudanças pedidas no atendimento (ex.: cores) são feitas **pelo Copilot, via ticket**. Não implemente você mesmo o que a aluna pediu para os agentes fazerem.
 
 ## Automação no GitHub (etapa 03)
 - O ticket cria uma issue `origin:app` (`server/src/automacao.js`, ligado por `AGENT_RUNTIME=github-native` no `.env`). O controlador `automacao/controlador.mjs` roda em `.github/workflows/native-agents.yml`.
 - Executor: `AGENT_EXECUTOR=copilot-cli` (padrão; de/para com Copilot Free) roda `copilot --agent=coordenador` no workflow; `cloud-agent` faz a atribuição paga. Modos do controlador: `preparar`, `finalizar` e `acompanhar`.
 - `AGENT_DRY_RUN` (variável do repositório; padrão `true`): só a dona do repositório decide. Hoje está **desligado** (`false`): cada ticket gasta créditos do Copilot. Como ligar/desligar e o custo: seção "Dry-run" em `DECISOES-E-CONFIGURACOES.md`.
-- O PR do agente só abre se os arquivos estiverem em `PERMITIDOS` (controlador), o espelho da política: ao mudar um, mude o outro.
+- Desde 11/11/2026 os agentes podem mudar **todo o código**, exceto `.github/`, `.claude/`, `.env`, `server/dados/` e `automacao/controlador.mjs` (`BLOQUEADOS` no controlador, espelho da política: ao mudar um, mude o outro). A `main` é protegida: todo PR precisa da aprovação da dona do repositório (`.github/CODEOWNERS`). Retomada manual (workflow_dispatch) refaz casos em `human-review`.
 - Entrega (etapa 05): PR com `Refs #issue`; `AUTO_MERGE` (variável do repositório, padrão `false`); depois do merge, a resposta `entrega-merge` e o fechamento da issue ficam com o controlador; no máximo uma rodada de correção (modo `avaliar`). Retomada: workflow_dispatch com o número da issue (ver PROGRESSO, etapa 05).
 - Verificação (etapa 04): `.github/workflows/ci.yml` (`npm ci` + build + testes) em push e PRs; nos PRs do agente, status do commit `fluxo/build-e-testes`. O controlador só aceita o PR da branch `agente/<requestId>` do próprio repositório.
 - Workflow de diagnóstico: `.github/workflows/teste-copilot.yml` (manual).

@@ -21,7 +21,9 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 | 11/11 | `AUTO_MERGE=false` (padrão): o PR fica aberto para a demonstração e o merge é da dona do repositório | Ainda não houve autorização para merge automático |
 | 11/11 | Verificação mínima (etapa 04): CI `ci.yml` (`npm ci` + build + testes) em push e PRs de pessoas; nos PRs do agente, a mesma verificação roda sem token no `native-agents` e vira o status `fluxo/build-e-testes` do commit. Para aceitar código: origem do PR (branch `agente/<requestId>` do próprio repositório), requestId, caminhos permitidos e build do commit atual | PR aberto pelo token do Actions não dispara outros workflows; um PR qualquer que cite a issue não pode entregar nem fechar |
 | 11/11 | Esclarecimento: a resposta da cliente no app vai para a issue como `fluxo:cliente` e retoma o mesmo pedido; o workflow só aceita esses comentários da conta do app | O caso parava em `waiting-customer` para sempre; repo público não pode gastar créditos com comentário de terceiros |
-| 11/11 | A página inicial (home) **não** entra na lista de caminhos permitidos aos agentes; o PO barra antes de implementar | Decisão da dona do repositório: manter o escopo da aula (quadro de tarefas) |
+| 11/11 | (Substituída) A home ficou primeiro fora da lista permitida | Ver a decisão seguinte |
+| 11/11 | **Agentes podem mudar todo o código**, exceto `.github/`, `.claude/`, `.env`, `server/dados/` e o controlador; **a `main` é protegida e todo PR exige a aprovação da dona do repositório** (CODEOWNERS, revisão obrigatória) | Decisão da dona do repositório: liberar o Copilot sem perder o controle do que entra na main |
+| 11/11 | As cores e as outras mudanças de produto pedidas no atendimento são feitas pelo Copilot, nunca à mão pelo Claude | Decisão da dona do repositório: o objetivo é ver o fluxo dos agentes |
 | 11/11 | Ticket aberto com login fica com **dono** (`ticket.usuario_id`); só o dono lê. Sem login, segue aberto (a interface ainda não tem login) | Etapa 03 |
 
 ## Configurações
@@ -35,7 +37,7 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 - [x] **Label `origin:app`** criado no repositório.
 - [x] **Apelidos dos tokens** em *Developer settings → Fine-grained tokens* (só nomes): `App-Fluxo-Tarefas` = token do secret `COPILOT_AGENT_TOKEN` (Copilot Requests); `App-Fluxo-Tarefas-Git` = token do `.env` `GITHUB_ISSUES_TOKEN` (Issues). Os dois vencem em 09/02/2027. Não apagar: os dois estão em uso.
 - [x] **Troca para o Copilot CLI:** `native-agents.yml` roda `copilot --agent=coordenador` (`AGENT_EXECUTOR=copilot-cli`, padrão); a atribuição paga continua disponível com `AGENT_EXECUTOR=cloud-agent`.
-- [x] **Proteção da `main`:** nenhuma (sem branch protection e sem rulesets), então não há exigência antiga a ajustar. O CI não é check obrigatório.
+- [x] **Proteção da `main`** (11/11): PR obrigatório com 1 aprovação de code owner (`.github/CODEOWNERS` → `@gabiberling`). Admins não são forçados, para a manutenção direta continuar possível; o bot do Actions não faz merge sem a aprovação. O CI não é check obrigatório.
 - [x] **Actions pode abrir PR:** *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* ligado.
 - [x] **Variável do repositório `AGENT_DRY_RUN=false`** (11/11, com o ok da dona do repositório). Veja "Dry-run" abaixo.
 
