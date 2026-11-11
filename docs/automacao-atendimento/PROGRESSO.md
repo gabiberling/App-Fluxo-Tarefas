@@ -132,3 +132,30 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
   3. Texto repetido (o mesmo publicText como andamento e como final) é publicado uma vez só.
   4. O pedido diferencia "faltou detalhe do cliente" (`waiting-customer`, com uma pergunta) de "a base não tem a resposta" (`human-review` + `knowledgeGap`).
 - Atenção: com `AGENT_DRY_RUN=false`, todo ticket novo aberto no app aciona o agente e gasta créditos. Para pausar: `gh variable set AGENT_DRY_RUN --body true`.
+
+## Etapa 05: entregar resposta e tratar retomadas (11/11/2026)
+
+- **Entrega:**
+  - O workflow abre o PR a partir do relatório do coordenador. É o "coordenador abre o PR" do cloud agent: aqui o agente não tem push.
+  - O Revisor registra `review.ok`/`notes` no relatório.
+  - O commit só é conferido depois de build e testes verdes; o SHA fica no estado e no corpo do PR.
+  - O PR usa `Refs #issue`, e não `Fixes`, para o merge não fechar a issue antes da resposta.
+- **AUTO_MERGE** (variável do repositório; padrão `false`):
+  - Com `false`, o PR fica aberto para a demonstração. Quando a dona faz o merge, o evento do PR aciona a entrega.
+  - Com `true`, autorizado antes para a cópia, o controlador integra pela API só o SHA conferido. A API respeita as regras da branch, sem bypass. Depois ele entrega a resposta na mesma execução.
+- **Depois do merge confirmado:** o controlador publica a resposta curta do N1 (`deliveryText` do relatório ou um texto padrão), com o ID estável `entrega-merge`, e fecha a issue (`completed`). O texto diz que o código foi integrado e que o app local precisa ser atualizado. Na sincronização seguinte, o app mostra a mensagem no ticket da dona, marca o ticket como resolvido e para de sincronizar o caso.
+- **Outros desfechos:** dúvida de uso respondida (`answered`) recebe a resposta e fecha a issue. Esclarecimento pendente (`waiting-customer`), `commercial` e `human-review` mantêm o caso aberto.
+- **Falhas:** se o build/testes ou a revisão falharem, o controlador (modo `avaliar`) pede uma única rodada de correção ao coordenador no mesmo trabalho (mesmo requestId, mesmos arquivos e o erro curto) e confere de novo. Se ainda falhar, o PR abre como rascunho, com a pendência no corpo e fase `pr-pendente`, e o instrutor decide. Nenhum ticket novo é criado e o trabalho não recomeça.
+- **Conferido com transporte simulado** (um GitHub falso em arquivo, sem rede):
+  - Uma retomada depois do merge publicou a resposta e fechou a issue. Repetida, não duplicou nada (3 comentários e 1 fechamento).
+  - A sincronização do app trouxe a resposta para o ticket, marcou o ticket como resolvido e parou.
+  - O modo `avaliar` pediu correção só quando o build falhou.
+  - `npm test`: 32 testes passando; `npm run build` ok.
+- **Ainda não executado de verdade:** um pedido com código no GitHub, que abriria PR, nem a rodada de correção real. As duas coisas gastam créditos do Copilot.
+
+**Caminho de retomada:** tudo é retomado pela própria issue, sem abrir ticket novo. O comentário "Resumo interno do controlador" guarda requestId, PR, fase, SHA conferido e os IDs das mensagens já publicadas. Para retomar, use *Actions → Agentes nativos → Run workflow* com o número da issue. O controlador relê esse estado e faz só o que falta:
+- se já existe PR com merge, apenas entrega a resposta (`entrega-merge`) e fecha a issue, sem repetir mensagens;
+- se o PR está aberto ou pendente, só acompanha;
+- se o trabalho parou no meio (`executando`) ou o relatório falhou (`erro-execucao`), executa de novo o mesmo requestId.
+
+No app, a sincronização usa os mesmos IDs e não duplica mensagens.

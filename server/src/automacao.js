@@ -20,6 +20,7 @@ export const requestIdDoTicket = (ticketId) => `req-${ticketId}`;
 export const marcaOrigem = (ticketId, requestId) => `<!-- fluxo:origem app ticket=${ticketId} requestId=${requestId} -->`;
 const RE_PUBLICO = /^<!-- fluxo:publico id=([\w.-]+) -->\s*([\s\S]*)$/;
 const RE_ESTADO = /<!-- fluxo:estado (\{.*\}) -->/;
+const FASES_ENCERRADAS = ["concluido", "answered", "pr-fechado"];
 
 /** Issue do ticket. Leva só o pedido; o dono fica no SQLite, não vai para o GitHub. */
 export function montarIssue({ ticket, conteudo, requestId }) {
@@ -93,11 +94,13 @@ export function criarAutomacao(db, cfg = configDaAutomacao()) {
     if (!cfg.ligado || !cfg.token || !reg?.issue_number) return reg ?? null;
     const comentarios = await github(cfg, "GET", `/repos/${cfg.repo}/issues/${reg.issue_number}/comments?per_page=100`);
     const enviadas = new Set(JSON.parse(reg.mensagens_enviadas));
+    let faseRemota = null;
     const inserir = db.prepare("INSERT INTO message (id, ticket_id, role, content, criado_em) VALUES (?, ?, 'agent', ?, ?)");
     for (const c of comentarios) {
       const estado = c.body.match(RE_ESTADO);
       if (estado) {
         const e = JSON.parse(estado[1]);
+        faseRemota = e.fase ?? null;
         gravar(ticketId, { pr_number: e.pr ?? null, fase: e.fase ?? reg.fase });
         // Sem informação na base: o cartão vai para "Sem resposta" (uma vez só).
         if (e.lacuna && !enviadas.has("lacuna")) {
@@ -114,11 +117,18 @@ export function criarAutomacao(db, cfg = configDaAutomacao()) {
       enviadas.add(publico[1]);
       gravar(ticketId, { mensagens_enviadas: JSON.stringify([...enviadas]) });
     }
+    // Caso encerrado (merge entregue ou dúvida respondida): ticket resolvido e fim da sincronização.
+    // A marca "__fim" só entra depois de trazer todas as mensagens desta leitura.
+    if (FASES_ENCERRADAS.includes(faseRemota) && !enviadas.has("__fim")) {
+      if (faseRemota !== "pr-fechado") db.prepare("UPDATE ticket SET status = 'resolved' WHERE id = ?").run(ticketId);
+      enviadas.add("__fim");
+      gravar(ticketId, { mensagens_enviadas: JSON.stringify([...enviadas]) });
+    }
     return registro(ticketId);
   }
 
   async function sincronizarTodos() {
-    const abertos = db.prepare("SELECT ticket_id FROM agent_request WHERE issue_number IS NOT NULL AND fase NOT IN ('concluido', 'pr-fechado')").all();
+    const abertos = db.prepare(`SELECT ticket_id FROM agent_request WHERE issue_number IS NOT NULL AND mensagens_enviadas NOT LIKE '%"__fim"%'`).all();
     for (const { ticket_id } of abertos) {
       try { await sincronizar(ticket_id); } catch (e) { console.error("[automação]", e.message); }
     }

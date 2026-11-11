@@ -5,13 +5,15 @@
 # - Roda sempre a definição e o código da main (pull_request_target + checkout da main).
 # - O controlador é copiado para fora do repositório ANTES do agente; é essa cópia que executa.
 # - O passo do agente só recebe o token do Copilot: não faz push, não acessa a internet (URLs negadas),
-#   não roda build/testes e só pode editar arquivos; .github, .claude, automacao, .env, server/dados e configs ficam bloqueados.
-# - Os testes rodam num passo sem nenhum token.
-# - Commit/push/PR são feitos pelo controlador, só se os arquivos mudados estiverem na política.
+#   não roda build/testes e só pode editar arquivos; .github, .env, server/dados, configs e o
+#   controlador ficam bloqueados.
+# - Build e testes rodam em passos sem nenhum token.
+# - Commit/push/PR/merge são feitos pelo controlador, só se os arquivos mudados estiverem na política.
 #
 # Variáveis do repositório (Settings > Secrets and variables > Actions > Variables):
-#   AGENT_DRY_RUN  true (padrão) = só monta e mostra | false = executa
+#   AGENT_DRY_RUN  true (padrão) = só monta e mostra | false = executa (gasta créditos do Copilot)
 #   AGENT_EXECUTOR copilot-cli (padrão) | cloud-agent (exige plano pago do Copilot)
+#   AUTO_MERGE     false (padrão) = PR fica aberto para a demonstração | true = integra o commit conferido
 # Retomar: Actions > Agentes nativos > Run workflow, com o número da issue.
 name: Agentes nativos
 
@@ -39,7 +41,7 @@ jobs:
   agentes:
     if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'origin:app')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
       AGENT_RUNTIME: ${{ vars.AGENT_RUNTIME || 'github-native' }}
       AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN || 'true' }}
@@ -70,38 +72,72 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm install -g @github/copilot
-          # A CLI também leria .claude/ (espelho do Claude Code): fora do caminho durante o agente,
-          # escondido do git status para os agentes não o verem como "apagado".
+          # A CLI também leria .claude/ (espelho do Claude Code): fora do caminho enquanto os agentes
+          # rodam, e escondido do git status para não aparecer como "apagado". Volta no Finalizar.
           git ls-files -z .claude | xargs -0 git update-index --skip-worktree
           mv .claude "$RUNNER_TEMP/.claude-espelho"
-
-      - name: Coordenador (Copilot CLI)
-        if: steps.preparar.outputs.executar == 'true'
-        continue-on-error: true
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
-        run: |
+          # Mesmas permissões nas duas rodadas do agente (a normal e a única de correção).
+          cat > "$RUNNER_TEMP/agente.sh" <<'EOF'
+          set -u
           copilot --agent=coordenador --no-ask-user \
             --allow-tool='write' \
             --allow-tool='shell(git status)' --allow-tool='shell(git diff:*)' --allow-tool='shell(mkdir:*)' \
             --deny-tool='write(.github/**)' --deny-tool='write(automacao/controlador.mjs)' --deny-tool='write(.env*)' \
             --deny-tool='write(server/dados/**)' --deny-tool='write(package*.json)' --deny-tool='write(vite.config.js)' \
             --deny-tool='write(scripts/**)' --deny-tool='shell(git push:*)' --deny-tool='shell(git commit:*)' \
-            -p "$(cat "$RUNNER_TEMP/pedido.txt")"
+            -p "$(cat "$1")"
+          EOF
+
+      - name: Coordenador (Copilot CLI)
+        if: steps.preparar.outputs.executar == 'true'
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
+        run: bash "$RUNNER_TEMP/agente.sh" "$RUNNER_TEMP/pedido.txt"
 
       - name: Conferir build e testes (sem nenhum token)
         id: conferir
         if: steps.preparar.outputs.executar == 'true'
         continue-on-error: true
         run: |
-          mv "$RUNNER_TEMP/.claude-espelho" .claude
-          git ls-files -z .claude | xargs -0 git update-index --no-skip-worktree
-          npm run build && npm test
+          set -o pipefail
+          (npm run build && npm test) 2>&1 | tee "$RUNNER_TEMP/conferir.log"
 
-      - name: Finalizar (PR e mensagens)
+      - name: Avaliar (pede no máximo uma correção)
+        id: avaliar
+        if: steps.preparar.outputs.executar == 'true'
+        run: node "$RUNNER_TEMP/controlador.mjs" avaliar
+        env:
+          TESTES_OK: ${{ steps.conferir.outcome == 'success' }}
+          REQUEST_ID: ${{ steps.preparar.outputs.request_id }}
+          RESULT_PATH: ${{ steps.preparar.outputs.result_path }}
+
+      - name: Correção (rodada única, mesmo trabalho)
+        if: steps.avaliar.outputs.corrigir == 'true'
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN }}
+        run: bash "$RUNNER_TEMP/agente.sh" "$RUNNER_TEMP/pedido-correcao.txt"
+
+      - name: Conferir de novo (sem nenhum token)
+        id: conferir2
+        if: steps.avaliar.outputs.corrigir == 'true'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          (npm run build && npm test) 2>&1 | tee "$RUNNER_TEMP/conferir.log"
+
+      - name: Finalizar (PR, merge opcional, resposta e fechamento)
         if: always() && steps.preparar.outputs.executar == 'true'
-        run: node "$RUNNER_TEMP/controlador.mjs" finalizar
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ISSUE: ${{ steps.preparar.outputs.issue }}
-          TESTES_OK: ${{ steps.conferir.outcome == 'success' }}
+          AUTO_MERGE: ${{ vars.AUTO_MERGE || 'false' }}
+          CORRECAO_FEITA: ${{ steps.avaliar.outputs.corrigir == 'true' }}
+          TESTES_OK: ${{ (steps.avaliar.outputs.corrigir == 'true' && steps.conferir2.outcome == 'success') || (steps.avaliar.outputs.corrigir != 'true' && steps.conferir.outcome == 'success') }}
+        run: |
+          if [ -d "$RUNNER_TEMP/.claude-espelho" ]; then
+            rm -rf .claude && mv "$RUNNER_TEMP/.claude-espelho" .claude
+            git ls-files -z .claude | xargs -0 git update-index --no-skip-worktree
+          fi
+          node "$RUNNER_TEMP/controlador.mjs" finalizar

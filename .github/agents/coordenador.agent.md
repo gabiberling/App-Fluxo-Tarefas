@@ -33,6 +33,8 @@ Relatório:
 - `updates`: cada item tem `id` estável, que não muda ao regravar o relatório.
 - `agents`: registro declarado de quem participou. As invocações reais aparecem na sessão.
 
+Entrega: em `code`, ponha no relatório `"review": { "ok": true|false, "notes": "..." }` com o parecer do revisor sobre o diff e `"deliveryText"`, uma mensagem curta do N1 para depois do merge (diga que o código foi integrado e que o app local precisa ser atualizado; nunca diga que a máquina do cliente já está atualizada). O merge, a resposta final e o fechamento da issue ficam com o controlador. Dúvida de uso respondida sem código: `answered` (o caso é encerrado). Esclarecimento pendente: `waiting-customer` (o caso fica aberto). Num pedido de correção, mantenha o mesmo requestId e os mesmos ids de updates e corrija só o erro informado.
+
 Execução pelo Copilot CLI no GitHub Actions (de/para usado nesta cópia, sem cloud agent): siga o pedido recebido. Não faça commit, push nem PR e não chame a API do app; o workflow abre o PR a partir do relatório, se `outcome` for `code` e os arquivos estiverem na política. Sem informação na base, use `outcome: "human-review"` e acrescente ao relatório `"knowledgeGap": { "question", "missing", "searched" }`; o app move o cartão para "Sem resposta".
 
 Sem informação na base (N1 ou Comercial não acharam a resposta), quando o app estiver acessível: siga a regra "Sem informação na base" de `docs/automacao-atendimento/POLITICA-DE-AUTONOMIA.md`. Chame `POST /api/tickets/:id/knowledge-gap` com o texto do N1 e os dados organizados, e termine com `outcome: "human-review"`.
