@@ -195,3 +195,11 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
 - As cores do ticket "Cores" serão feitas pelo Copilot, retomando a issue #2. Nada foi alterado à mão.
 - **1ª tentativa das cores (run 43061406897, 3,48 créditos):** o Copilot alterou `client/src/landing.css` e o build e os testes passaram, mas o Finalizar falhou por um defeito do controlador. O `git status --porcelain` era lido com `trim()`, o que cortava o 1º caractere do 1º caminho (`lient/src/landing.css`). Sem PR, o trabalho se perdeu com o runner e a issue ficou em `executando`. Correção: função `arquivosMudados`, conferida com a saída que falhou. A issue #2 foi retomada manualmente.
 - **2ª tentativa (run 43062498049, 0,68 crédito):** ao refazer uma execução parada em `executando`, o controlador não mandou a conversa, então o agente repetiu a pergunta "Em qual tela…?" e voltou a `waiting-customer`. Correção: toda retomada leva a conversa; refazer uma execução parada não abre rodada nova; e `waiting-customer` também pode ser refeito manualmente.
+
+## Primeiro ciclo completo: ticket → Copilot → PR → aprovação → entrega (11/11/2026)
+
+- Ticket "Cores" (issue #2): o Copilot retomou com a conversa, alterou só `client/src/landing.css` (tons pastéis de rosa e lilás na home) e o workflow abriu o **PR #3**, com build e testes verdes.
+- A dona do repositório revisou, **aprovou** (revisão obrigatória de code owner) e fez o **merge** (commit 5b15519). Antes houve dois fechamentos por engano ("Close pull request"), reabertos.
+- Depois do merge, o evento `pull_request_target` (run 43065517075) publicou a resposta final do N1, com o id estável `entrega-merge` ("O código foi integrado. Atualize o app local para ver…"), e **fechou a issue #2** (completed, fase `concluido`).
+- A cópia local foi atualizada com `git switch main` e `git pull`. A branch de pré-visualização do PR foi apagada localmente.
+- Custo do ticket "Cores" somando todas as tentativas: cerca de 7,7 créditos de IA, inflado por dois defeitos do controlador já corrigidos.
