@@ -105,7 +105,7 @@
 
 /* caixa de mensagem */
 .chat-rodape { padding: 0 var(--e4) var(--e4); max-width: calc(768px + 2 * var(--e4)); width: 100%; margin: 0 auto; display: grid; gap: var(--e2); }
-.chat-rodape .aviso, .chat-inicio .aviso { margin: 0; }
+.chat-rodape .aviso { margin: 0; }
 
 .composer {
   display: flex; align-items: flex-end; gap: var(--e2);
@@ -137,32 +137,9 @@
 
 .chat-nota { text-align: center; font-size: 12px; color: var(--secundario); }
 
-/* tela de novo ticket */
-.chat-inicio {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--e4);
-  padding: var(--e8) var(--e4);
-  text-align: center;
-}
-.chat-inicio-icone {
-  width: 56px; height: 56px; border-radius: var(--r-cheio);
-  display: grid; place-items: center;
-  background: var(--oceano-fraco); color: var(--oceano);
-}
-.chat-inicio h1 { font-size: var(--titulo-1); line-height: 1.2; letter-spacing: -0.02em; color: var(--noite); text-wrap: balance; }
-.chat-inicio > p { color: var(--secundario); max-width: 52ch; text-wrap: pretty; }
-.chat-inicio-caixa, .chat-inicio .aviso { width: min(720px, 100%); text-align: left; }
-.chat-inicio-caixa { margin-top: var(--e2); }
-
-.sugestoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--e2); max-width: 720px; }
-.sugestao {
-  border: 1px solid var(--borda); border-radius: var(--r-cheio);
-  background: var(--superficie); color: var(--secundario);
-  padding: var(--e2) var(--e4); cursor: pointer;
-  transition: background-color 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out;
-}
-.sugestao:hover { background: var(--fundo); color: var(--noite); border-color: var(--borda-forte); }
+/* conversa vazia: nenhum ticket ainda */
+.chat-vazio { color: var(--secundario); text-align: center; padding: var(--e8) 0; text-wrap: pretty; }
+.composer-texto:disabled { cursor: not-allowed; }
 
 /* ---------- responsivo ---------- */
 
@@ -178,6 +155,5 @@
   .chat-topo { padding: var(--e3) var(--e4); flex-wrap: wrap; }
   .chat-topo-texto { flex-wrap: wrap; }
   .chat-rodape { position: sticky; bottom: 0; background: var(--superficie); padding-top: var(--e2); }
-  .chat-inicio h1 { font-size: var(--titulo-2); }
   .tickets .lateral-acoes { display: flex; }
 }

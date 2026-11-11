@@ -10,10 +10,9 @@ import { Menu } from "./componentes/Menu.jsx";
 import { Marca, Navegacao } from "./componentes/Navegacao.jsx";
 
 const ATUALIZAR_A_CADA = 5000; // busca respostas novas do suporte enquanto a aba está visível
-const SUGESTOES = ["Não consigo acessar minha conta", "Encontrei um erro no quadro", "Tenho uma sugestão de melhoria"];
 
 /** Caixa de mensagem no estilo ChatGPT: cresce com o texto, Enter envia e Shift+Enter quebra linha. */
-function Composer({ valor, aoMudar, aoEnviar, desabilitado, placeholder }) {
+function Composer({ valor, aoMudar, aoEnviar, desabilitado, bloqueado = false, placeholder }) {
   const ref = useRef(null);
   useLayoutEffect(() => {
     const t = ref.current;
@@ -39,6 +38,7 @@ function Composer({ valor, aoMudar, aoEnviar, desabilitado, placeholder }) {
         }}
         placeholder={placeholder}
         aria-label="Mensagem"
+        disabled={bloqueado}
         maxLength={10000}
       />
       <button type="submit" className="composer-enviar" aria-label="Enviar mensagem" disabled={!pode}>
@@ -78,13 +78,18 @@ export function Atendimento() {
   const [dialogo, setDialogo] = useState(null);
   const fimRef = useRef(null);
 
-  const abrirNovoTicket = (titulo = "") => setDialogo({ tipo: "novo", titulo, erro: null, enviando: false });
+  const abrirNovoTicket = () => setDialogo({ tipo: "novo", erro: null, enviando: false });
 
   const carregarLista = useCallback(() => api.tickets.listar().then((d) => setTickets(d?.tickets ?? [])), []);
 
   useEffect(() => {
     carregarLista().catch((e) => { setErro(e.message); setTickets([]); });
   }, [carregarLista]);
+
+  // A área central é sempre um chat: sem ticket escolhido (ou após excluir o aberto), abre o mais recente.
+  useEffect(() => {
+    if (!ativoId && tickets?.length) setAtivoId(tickets[0].id);
+  }, [ativoId, tickets]);
 
   // O ticket aberto fica na URL (?ticket=…), então recarregar a página mantém a conversa.
   useEffect(() => {
@@ -175,8 +180,8 @@ export function Atendimento() {
       setErro(null);
       await api.tickets.excluir(alvo.id);
       setDialogo(null);
+      await carregarLista(); // antes de limpar o ativo, para não reabrir o ticket excluído
       if (alvo.id === ativoId) setAtivoId(null);
-      await carregarLista();
     } catch (e) { setErro(e.message); }
   };
 
@@ -191,21 +196,26 @@ export function Atendimento() {
   ) : null;
 
   const conteudo = () => {
-    // Nenhum ticket aberto: convite para abrir um, com atalhos que já preenchem o título.
+    // Sem ticket ainda: o mesmo layout de chat, com a caixa desativada. Ticket novo só pelo "Novo ticket" da lateral.
     if (!ativoId) {
+      if (tickets === null || tickets.length) {
+        return <p className="carregando-line chat-carregando" role="status">Carregando conversa…</p>;
+      }
       return (
-        <div className="chat-inicio">
-          <span className="chat-inicio-icone" aria-hidden="true"><Icone nome="suporte" tamanho={28} /></span>
-          <h1>Como podemos ajudar?</h1>
-          <p>Abra um ticket contando o problema ou a dúvida. Ele vira uma conversa com o suporte e entra no quadro Atendimento.</p>
-          {aviso}
-          <Botao variante="primario" icone="novo-ticket" onClick={() => abrirNovoTicket()}>Abrir ticket</Botao>
-          <div className="sugestoes">
-            {SUGESTOES.map((s) => (
-              <button key={s} type="button" className="sugestao" onClick={() => abrirNovoTicket(s)}>{s}</button>
-            ))}
+        <>
+          <header className="chat-topo">
+            <h1 className="chat-titulo">Atendimento</h1>
+          </header>
+          <div className="chat-rolagem">
+            <div className="chat-coluna">
+              <p className="chat-vazio">Nenhuma conversa ainda. Clique em <strong>Novo ticket</strong>, no menu à esquerda, para falar com o suporte.</p>
+            </div>
           </div>
-        </div>
+          <div className="chat-rodape">
+            {aviso}
+            <Composer valor="" aoMudar={() => {}} aoEnviar={() => {}} desabilitado bloqueado placeholder="Abra um ticket em “Novo ticket” para conversar" />
+          </div>
+        </>
       );
     }
 
@@ -344,7 +354,7 @@ export function Atendimento() {
               if (title && content) void criarTicket(title, content);
             }}
           >
-            <Campo rotulo="Título" name="title" defaultValue={dialogo.titulo} maxLength={120} required autoFocus placeholder="Ex.: Não consigo excluir um cartão" />
+            <Campo rotulo="Título" name="title" maxLength={120} required autoFocus placeholder="Ex.: Não consigo excluir um cartão" />
             <Campo
               rotulo="Descrição"
               name="content"
