@@ -203,3 +203,4 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
 - Depois do merge, o evento `pull_request_target` (run 43065517075) publicou a resposta final do N1, com o id estável `entrega-merge` ("O código foi integrado. Atualize o app local para ver…"), e **fechou a issue #2** (completed, fase `concluido`).
 - A cópia local foi atualizada com `git switch main` e `git pull`. A branch de pré-visualização do PR foi apagada localmente.
 - Custo do ticket "Cores" somando todas as tentativas: cerca de 7,7 créditos de IA, inflado por dois defeitos do controlador já corrigidos.
+- **2º ciclo completo, ticket "Cores antigas" (issue #4, PR #5):** a cliente pediu a volta das cores originais da home. O Copilot reverteu `client/src/landing.css`, a dona aprovou e fez o merge (commit 5441992), o workflow entregou a resposta final e fechou a issue. A cópia local foi atualizada com `git pull`.
