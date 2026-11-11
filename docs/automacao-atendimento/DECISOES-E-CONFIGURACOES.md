@@ -25,10 +25,10 @@ Registro do que foi decidido, do que já está configurado e do que ainda falta 
 - [x] **Copilot Free** ativado na conta.
 - [x] Secret do repositório **`COPILOT_AGENT_TOKEN`**: token fine-grained da conta pessoal com permissão "Copilot Requests". Testado pelo workflow `teste-copilot.yml`.
 - [x] Workflows na `main`: `teste-copilot.yml` (manual) e `native-agents.yml` (controlador, `AGENT_DRY_RUN=true`).
+- [x] **`.env` local** com `AGENT_RUNTIME=github-native`, `AGENT_DRY_RUN=true`, `GITHUB_REPO` e **`GITHUB_ISSUES_TOKEN`** (fine-grained, só este repositório, Issues: leitura e escrita). Fica só no computador; **não** é secret do repositório (o app local não lê secrets do GitHub). O secret `ISSUES_TOKEN`, criado por engano no repositório, foi excluído.
+- [x] **Label `origin:app`** criado no repositório.
 
 ### Pendentes
-- [ ] **`.env` local** (copie de `.env.example`): `AGENT_RUNTIME=github-native`, `AGENT_DRY_RUN=true`, `GITHUB_REPO` e **`GITHUB_ISSUES_TOKEN`**. O GitHub não permite criar token fine-grained por API: crie em *Settings → Developer settings → Fine-grained tokens*, só para este repositório, com **Issues: Read and write**. Anote a validade.
-- [ ] **Label `origin:app`** no repositório (`gh label create origin:app`), para a issue criada pelo app já nascer com ele.
 - [ ] (Opcional) Variáveis do repositório `AGENT_RUNTIME` e `AGENT_DRY_RUN` em *Settings → Secrets and variables → Actions → Variables*. Sem elas, o workflow usa `github-native` e `true`.
 - [ ] **Ensaio:** trocar no controlador a atribuição ao `copilot-swe-agent[bot]` (cloud agent pago) por um passo que roda `copilot --agent=coordenador` no próprio workflow (de/para), e só então usar `AGENT_DRY_RUN=false`.
 - [ ] **Validade dos tokens:** renovar o `COPILOT_AGENT_TOKEN` e o `GITHUB_ISSUES_TOKEN` antes de vencerem.

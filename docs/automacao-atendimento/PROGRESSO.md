@@ -100,3 +100,11 @@ Cada etapa registra aqui o que foi adaptado. O que depender de automação no Gi
   - O `GITHUB_ISSUES_TOKEN` local ainda não existe.
   - A atribuição a `copilot-swe-agent[bot]` exige o cloud agent (plano pago). No ensaio, o de/para troca esse passo pelo Copilot CLI com `--agent=coordenador` no próprio workflow.
   - O repositório é público, então o texto do ticket fica visível na issue. Use só dados fictícios.
+
+## Teste ponta a ponta da etapa 03 (11/11/2026)
+
+- Configuração: `.env` local com o `GITHUB_ISSUES_TOKEN`, que só acessa este repositório (testado sem mostrar o valor); label `origin:app` criado; o secret `ISSUES_TOKEN`, sem uso, foi excluído.
+- O app subiu com o `.env` real e um banco de teste (o banco local não foi usado). Pela tela, com **Novo ticket**, foi aberto o ticket fictício "[Teste fictício] Cartão não muda de lista".
+- Resultado: o backend criou a **issue #1** com o label `origin:app` (https://github.com/gabiberling/App-Fluxo-Tarefas/issues/1) e gravou `agent_request` com fase `issue-criada`.
+- O workflow `Agentes nativos` disparou duas vezes (opened e labeled), ambas com sucesso. A issue ficou com um único "Resumo interno do controlador" (fase `dry-run`), porque o segundo disparo releu o estado e atualizou o mesmo comentário. A atribuição a `copilot-swe-agent[bot]` com `custom_agent=coordenador` foi montada e mostrada no resumo do Actions, **sem envio** (`AGENT_DRY_RUN=true`).
+- Falta, para o ensaio: trocar a atribuição do cloud agent pago pelo passo com Copilot CLI (`copilot --agent=coordenador`) e então usar `AGENT_DRY_RUN=false`.
