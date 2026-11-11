@@ -204,3 +204,9 @@ O professor não usou esta etapa em aula, mas ela foi conferida e completada.
 - A cópia local foi atualizada com `git switch main` e `git pull`. A branch de pré-visualização do PR foi apagada localmente.
 - Custo do ticket "Cores" somando todas as tentativas: cerca de 7,7 créditos de IA, inflado por dois defeitos do controlador já corrigidos.
 - **2º ciclo completo, ticket "Cores antigas" (issue #4, PR #5):** a cliente pediu a volta das cores originais da home. O Copilot reverteu `client/src/landing.css`, a dona aprovou e fez o merge (commit 5441992), o workflow entregou a resposta final e fechou a issue. A cópia local foi atualizada com `git pull`.
+
+## README de apresentação (11/11/2026)
+
+- O `README.md` foi reescrito como apresentação do projeto para devs, com badges (CI, stack, Copilot, Claude Code), diagrama Mermaid do fluxo, equipe de agentes, arquitetura, segurança e governança, como rodar e créditos (desenvolvido por @gabiberling num curso, em pair programming com o Claude Code, a partir do projeto-base do professor).
+- 4 capturas reais em `docs/imagens/` (home, quadro, chat do atendimento e quadro Atendimento), feitas com Chrome headless sobre um banco de teste com dados fictícios.
+- A referência técnica que estava no README antigo (API, `npm run dev`, SQLite, `.env`) foi para `docs/API.md`, ampliada com a integração com o GitHub.

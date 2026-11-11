@@ -2,6 +2,8 @@
 
 Responda sempre em português. Este repositório é a cópia da aluna de um projeto de **aula prática**: o professor manda prompts por etapa ("ETAPA 00, 01, …"). Em cada etapa, faça só o que ela pede, com a menor mudança que funciona, e pare no fim com um resumo curto: o que fez, os comandos executados e o que falta. Nunca diga que algo rodou ou funcionou sem ter executado.
 
+Apresentação do projeto: `README.md` (público; telas em `docs/imagens/`, atualize se o app mudar). Referência da API: `docs/API.md`.
+
 Decisões, configurações e pendências: `docs/automacao-atendimento/DECISOES-E-CONFIGURACOES.md`. Histórico por etapa: `docs/automacao-atendimento/PROGRESSO.md`. Leia os dois antes de começar uma etapa nova: os prompts da aula às vezes pedem algo já resolvido aqui ou que mudou por decisão nossa (ex.: Copilot pago → de/para com workflows).
 
 ## O app
